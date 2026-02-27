@@ -1,0 +1,2178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevTools Hub | Tommy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- JS Beautify para o Formatador de Código -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.9/beautifier.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.9/beautify-css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.9/beautify-html.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', "Liberation Mono", "Courier New", 'monospace'],
+                    },
+                    colors: {
+                        accent: '#1251E6',
+                        accentHover: '#0F44C2',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #fcfcfc;
+            /* Grid background */
+            background-image: 
+                linear-gradient(to right, #eaeaea 1px, transparent 1px),
+                linear-gradient(to bottom, #eaeaea 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+
+        /* Glassmorphism Utilities */
+        .glass-pill {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 9999px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+            transition: all 0.3s ease;
+        }
+
+        /* PAINEL SÓLIDO */
+        .glass-panel {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 32px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+        }
+
+        /* NEW CARD STYLE */
+        .glass-card {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 32px;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            box-shadow: none;
+        }
+
+        .glass-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 0 3px var(--hover-color, #1251E6);
+        }
+
+        .inner-card {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 32px;
+        }
+
+        .glass-input {
+            background: #ffffff;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 9999px;
+            padding: 0.75rem 1.5rem;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .glass-input:focus {
+            border-color: #1251E6;
+            box-shadow: 0 0 0 3px rgba(18, 81, 230, 0.15);
+        }
+
+        /* Filter Pills */
+        .filter-btn {
+            transition: all 0.2s;
+        }
+        .filter-btn.active {
+            background: #1251E6;
+            color: white;
+            border-color: #1251E6;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+        .fade-in { animation: fadeIn 0.4s ease forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="text-gray-800 font-sans antialiased overflow-x-hidden relative">
+
+    <!-- Top Navigation -->
+    <nav class="fixed top-0 left-0 w-full z-50 p-6 flex justify-center pointer-events-none">
+        <div class="glass-pill px-8 py-4 flex items-center justify-center w-full max-w-5xl pointer-events-auto bg-white/60">
+            <div class="flex items-center gap-4">
+                <button id="back-btn" onclick="navigate('home')" class="hidden flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-100/50 text-gray-600 hover:text-accent transition-colors absolute left-4" title="Voltar para Home">
+                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                </button>
+                <div class="flex items-center gap-3 cursor-pointer" onclick="navigate('home')">
+                    <div class="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-white shadow-lg shadow-accent/30">
+                        <i data-lucide="terminal" class="w-5 h-5"></i>
+                    </div>
+                    <h1 id="nav-title" class="font-bold text-xl tracking-tight text-gray-900">DevTools Hub</h1>
+                </div>
+            </div>
+            <div class="hidden sm:flex items-center gap-2 text-sm font-medium text-gray-500 absolute right-8">
+                <span>Feito com</span>
+                <i data-lucide="heart" class="w-4 h-4 text-red-500 fill-current"></i>
+                <span>por Tommy</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="pt-32 pb-20 px-6 max-w-5xl mx-auto min-h-screen flex flex-col relative z-10">
+        
+        <!-- ================= HOME VIEW ================= -->
+        <div id="view-home" class="fade-in">
+            <div class="text-center mb-10">
+                <h2 class="text-4xl md:text-5xl font-bold tracking-tight mb-4 text-gray-900">Suas ferramentas, <span class="text-accent">simplificadas.</span></h2>
+                <p class="text-lg text-gray-500 max-w-2xl mx-auto">Uma coleção de utilitários rápidos e limpos para acelerar o seu fluxo de desenvolvimento diário.</p>
+            </div>
+
+            <!-- Busca e Filtros -->
+            <div class="flex flex-col items-center mb-12 gap-6">
+                <div class="relative w-full max-w-lg">
+                    <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"></i>
+                    <input type="text" id="search-tools" oninput="filterTools()" placeholder="Buscar ferramenta..." class="w-full pl-12 pr-4 py-4 rounded-full border border-gray-200 shadow-sm focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 transition-all text-gray-700">
+                </div>
+                
+                <div class="flex flex-wrap justify-center gap-2">
+                    <button onclick="setFilter('all', this)" class="filter-btn active px-4 py-1.5 rounded-full border border-gray-200 text-sm font-medium text-gray-600 bg-white hover:bg-gray-50">Todos</button>
+                    <button onclick="setFilter('generators', this)" class="filter-btn px-4 py-1.5 rounded-full border border-gray-200 text-sm font-medium text-gray-600 bg-white hover:bg-gray-50">Generators</button>
+                    <button onclick="setFilter('formatters', this)" class="filter-btn px-4 py-1.5 rounded-full border border-gray-200 text-sm font-medium text-gray-600 bg-white hover:bg-gray-50">Formatters & Minifiers</button>
+                    <button onclick="setFilter('converters', this)" class="filter-btn px-4 py-1.5 rounded-full border border-gray-200 text-sm font-medium text-gray-600 bg-white hover:bg-gray-50">Converters</button>
+                    <button onclick="setFilter('testers', this)" class="filter-btn px-4 py-1.5 rounded-full border border-gray-200 text-sm font-medium text-gray-600 bg-white hover:bg-gray-50">Testers</button>
+                    <button onclick="setFilter('utilities', this)" class="filter-btn px-4 py-1.5 rounded-full border border-gray-200 text-sm font-medium text-gray-600 bg-white hover:bg-gray-50">Utilities</button>
+                </div>
+            </div>
+
+            <!-- Fixados Section -->
+            <div id="pinned-section" class="mb-12 hidden">
+                <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                    <i data-lucide="pin" class="w-5 h-5 text-accent fill-current"></i> Fixados
+                </h3>
+                <div id="pinned-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Cards fixados entrarão aqui via JS -->
+                </div>
+            </div>
+
+            <!-- Todas as Ferramentas Section -->
+            <div id="all-tools-section">
+                <h3 id="all-tools-title" class="text-xl font-bold text-gray-800 mb-6 hidden">Todas as Ferramentas</h3>
+                <div id="tools-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    
+                    <div id="card-aspect-ratio" onclick="navigate('aspect-ratio')" class="tool-card relative glass-card p-8 flex flex-col items-center text-center group" data-name="aspect ratio calculator" data-cat="utilities image design" style="--hover-color: #3b82f6;">
+                        <button onclick="togglePin(event, 'card-aspect-ratio')" class="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors z-10" title="Fixar/Desfixar">
+                            <i data-lucide="pin" class="pin-icon w-4 h-4 text-gray-300"></i>
+                        </button>
+                        <div class="w-16 h-16 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                            <i data-lucide="monitor" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2 text-gray-900">Aspect Ratio</h3>
+                        <p class="text-sm text-gray-500">Calcule proporções de imagens e vídeos.</p>
+                    </div>
+
+                    <div id="card-api-tester" onclick="navigate('api-tester')" class="tool-card relative glass-card p-8 flex flex-col items-center text-center group" data-name="api tester rest http request" data-cat="testers dev network" style="--hover-color: #10b981;">
+                        <button onclick="togglePin(event, 'card-api-tester')" class="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors z-10" title="Fixar/Desfixar">
+                            <i data-lucide="pin" class="pin-icon w-4 h-4 text-gray-300"></i>
+                        </button>
+                        <div class="w-16 h-16 rounded-full bg-green-50 text-emerald-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                            <i data-lucide="globe" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2 text-gray-900">API Tester</h3>
+                        <p class="text-sm text-gray-500">Teste endpoints REST diretamente do navegador.</p>
+                    </div>
+
+                    <div id="card-json-ld" onclick="navigate('json-ld')" class="tool-card relative glass-card p-8 flex flex-col items-center text-center group" data-name="json-ld schema generator seo" data-cat="generators seo web dev" style="--hover-color: #8b5cf6;">
+                        <button onclick="togglePin(event, 'card-json-ld')" class="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors z-10" title="Fixar/Desfixar">
+                            <i data-lucide="pin" class="pin-icon w-4 h-4 text-gray-300"></i>
+                        </button>
+                        <div class="w-16 h-16 rounded-full bg-purple-50 text-purple-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                            <i data-lucide="code-2" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2 text-gray-900">JSON-LD Schema</h3>
+                        <p class="text-sm text-gray-500">Gere marcações de dados para SEO avançado.</p>
+                    </div>
+
+                    <div id="card-base64" onclick="navigate('base64')" class="tool-card relative glass-card p-8 flex flex-col items-center text-center group" data-name="base64 encode decode" data-cat="converters text dev security" style="--hover-color: #f97316;">
+                        <button onclick="togglePin(event, 'card-base64')" class="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors z-10" title="Fixar/Desfixar">
+                            <i data-lucide="pin" class="pin-icon w-4 h-4 text-gray-300"></i>
+                        </button>
+                        <div class="w-16 h-16 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                            <i data-lucide="file-key-2" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2 text-gray-900">Base64 Encode/Decode</h3>
+                        <p class="text-sm text-gray-500">Codifique ou decodifique strings instantaneamente.</p>
+                    </div>
+
+                    <div id="card-color-conv" onclick="navigate('color-conv')" class="tool-card relative glass-card p-8 flex flex-col items-center text-center group" data-name="color converter hex rgb hsl picker" data-cat="converters design web" style="--hover-color: #ec4899;">
+                        <button onclick="togglePin(event, 'card-color-conv')" class="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors z-10" title="Fixar/Desfixar">
+                            <i data-lucide="pin" class="pin-icon w-4 h-4 text-gray-300"></i>
+                        </button>
+                        <div class="w-16 h-16 rounded-full bg-pink-50 text-pink-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                            <i data-lucide="palette" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2 text-gray-900">Color Converter</h3>
+                        <p class="text-sm text-gray-500">Converta cores entre os formatos HEX, RGB e HSL.</p>
+                    </div>
+
+                    <div id="card-uuid" onclick="navigate('uuid')" class="tool-card relative glass-card p-8 flex flex-col items-center text-center group" data-name="uuid guid generator random v4 v7" data-cat="generators dev id" style="--hover-color: #06b6d4;">
+                        <button onclick="togglePin(event, 'card-uuid')" class="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors z-10" title="Fixar/Desfixar">
+                            <i data-lucide="pin" class="pin-icon w-4 h-4 text-gray-300"></i>
+                        </button>
+                        <div class="w-16 h-16 rounded-full bg-cyan-50 text-cyan-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                            <i data-lucide="fingerprint" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2 text-gray-900">UUID Generator</h3>
+                        <p class="text-sm text-gray-500">Gere identificadores universais (UUID v4 / v7).</p>
+                    </div>
+
+                    <div id="card-minify" onclick="navigate('minify')" class="tool-card relative glass-card p-8 flex flex-col items-center text-center group" data-name="code minifier compress html css js" data-cat="formatters dev web" style="--hover-color: #ef4444;">
+                        <button onclick="togglePin(event, 'card-minify')" class="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors z-10" title="Fixar/Desfixar">
+                            <i data-lucide="pin" class="pin-icon w-4 h-4 text-gray-300"></i>
+                        </button>
+                        <div class="w-16 h-16 rounded-full bg-red-50 text-red-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                            <i data-lucide="minimize-2" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2 text-gray-900">Code Minifier</h3>
+                        <p class="text-sm text-gray-500">Comprima códigos HTML, CSS e JS para produção.</p>
+                    </div>
+
+                    <div id="card-beautify" onclick="navigate('beautify')" class="tool-card relative glass-card p-8 flex flex-col items-center text-center group" data-name="code beautifier formatter ident format" data-cat="formatters dev web" style="--hover-color: #6366f1;">
+                        <button onclick="togglePin(event, 'card-beautify')" class="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors z-10" title="Fixar/Desfixar">
+                            <i data-lucide="pin" class="pin-icon w-4 h-4 text-gray-300"></i>
+                        </button>
+                        <div class="w-16 h-16 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                            <i data-lucide="align-left" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2 text-gray-900">Code Beautifier</h3>
+                        <p class="text-sm text-gray-500">Formate e idente códigos desorganizados.</p>
+                    </div>
+
+                    <div id="card-cron" onclick="navigate('cron')" class="tool-card relative glass-card p-8 flex flex-col items-center text-center group" data-name="cron expression generator scheduler time" data-cat="generators dev schedule" style="--hover-color: #14b8a6;">
+                        <button onclick="togglePin(event, 'card-cron')" class="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors z-10" title="Fixar/Desfixar">
+                            <i data-lucide="pin" class="pin-icon w-4 h-4 text-gray-300"></i>
+                        </button>
+                        <div class="w-16 h-16 rounded-full bg-teal-50 text-teal-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                            <i data-lucide="clock-4" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2 text-gray-900">Cron Generator</h3>
+                        <p class="text-sm text-gray-500">Construa expressões cronogramadas facilmente.</p>
+                    </div>
+
+                    <div id="card-hash" onclick="navigate('hash')" class="tool-card relative glass-card p-8 flex flex-col items-center text-center group" data-name="hash generator sha md5 encrypt security" data-cat="utilities security crypto dev text" style="--hover-color: #eab308;">
+                        <button onclick="togglePin(event, 'card-hash')" class="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors z-10" title="Fixar/Desfixar">
+                            <i data-lucide="pin" class="pin-icon w-4 h-4 text-gray-300"></i>
+                        </button>
+                        <div class="w-16 h-16 rounded-full bg-yellow-50 text-yellow-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                            <i data-lucide="hash" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2 text-gray-900">Hash Generator</h3>
+                        <p class="text-sm text-gray-500">Gere hashes SHA-1, SHA-256 e SHA-512 de textos.</p>
+                    </div>
+
+                    <div id="card-img-conv" onclick="navigate('img-conv')" class="tool-card relative glass-card p-8 flex flex-col items-center text-center group" data-name="image converter png jpg jpeg webp" data-cat="converters image" style="--hover-color: #f43f5e;">
+                        <button onclick="togglePin(event, 'card-img-conv')" class="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors z-10" title="Fixar/Desfixar">
+                            <i data-lucide="pin" class="pin-icon w-4 h-4 text-gray-300"></i>
+                        </button>
+                        <div class="w-16 h-16 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                            <i data-lucide="image" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2 text-gray-900">Image Converter</h3>
+                        <p class="text-sm text-gray-500">Converta imagens para PNG, JPG ou WEBP no navegador.</p>
+                    </div>
+
+                    <div id="card-img-resize" onclick="navigate('img-resize')" class="tool-card relative glass-card p-8 flex flex-col items-center text-center group" data-name="image resizer crop dimensions" data-cat="utilities image" style="--hover-color: #8b5cf6;">
+                        <button onclick="togglePin(event, 'card-img-resize')" class="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors z-10" title="Fixar/Desfixar">
+                            <i data-lucide="pin" class="pin-icon w-4 h-4 text-gray-300"></i>
+                        </button>
+                        <div class="w-16 h-16 rounded-full bg-violet-50 text-violet-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                            <i data-lucide="crop" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2 text-gray-900">Image Resizer</h3>
+                        <p class="text-sm text-gray-500">Redimensione imagens mantendo a proporção original.</p>
+                    </div>
+
+                    <div id="card-svg-editor" onclick="navigate('svg-editor')" class="tool-card relative glass-card p-8 flex flex-col items-center text-center group" data-name="svg editor viewer preview export base64 data uri" data-cat="utilities image design dev code" style="--hover-color: #f59e0b;">
+                        <button onclick="togglePin(event, 'card-svg-editor')" class="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors z-10" title="Fixar/Desfixar">
+                            <i data-lucide="pin" class="pin-icon w-4 h-4 text-gray-300"></i>
+                        </button>
+                        <div class="w-16 h-16 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                            <i data-lucide="file-code-2" class="w-8 h-8"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold mb-2 text-gray-900">SVG View & Edit</h3>
+                        <p class="text-sm text-gray-500">Visualize, edite e exporte SVGs para PNG ou WEBP.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TOOL: ASPECT RATIO ================= -->
+        <div id="view-aspect-ratio" class="hidden fade-in w-full max-w-3xl mx-auto">
+            <div class="glass-panel p-8 md:p-12">
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="p-3 bg-blue-50 rounded-full text-blue-500"><i data-lucide="monitor" class="w-6 h-6"></i></div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Calculadora de Aspect Ratio</h2>
+                        <p class="text-sm text-gray-500">Insira a proporção original para calcular as novas dimensões.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                    <div class="space-y-6">
+                        <h3 class="font-semibold text-gray-700 flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs">1</span> Proporção Original</h3>
+                        <div class="flex items-center gap-4">
+                            <div class="w-full">
+                                <label class="block text-xs font-medium text-gray-500 mb-1 ml-4">Largura (W1)</label>
+                                <input type="number" id="ar-w1" value="1920" class="glass-input w-full" oninput="calculateAspectRatio('w1')">
+                            </div>
+                            <span class="text-gray-400 font-bold mt-5">:</span>
+                            <div class="w-full">
+                                <label class="block text-xs font-medium text-gray-500 mb-1 ml-4">Altura (H1)</label>
+                                <input type="number" id="ar-h1" value="1080" class="glass-input w-full" oninput="calculateAspectRatio('h1')">
+                            </div>
+                        </div>
+                        <div class="flex gap-2 flex-wrap">
+                            <button onclick="setRatio(16,9)" class="px-4 py-1.5 glass-pill text-sm hover:bg-blue-500 hover:text-white hover:border-blue-500 transition-colors">16:9</button>
+                            <button onclick="setRatio(4,3)" class="px-4 py-1.5 glass-pill text-sm hover:bg-blue-500 hover:text-white hover:border-blue-500 transition-colors">4:3</button>
+                            <button onclick="setRatio(1,1)" class="px-4 py-1.5 glass-pill text-sm hover:bg-blue-500 hover:text-white hover:border-blue-500 transition-colors">1:1</button>
+                            <button onclick="setRatio(9,16)" class="px-4 py-1.5 glass-pill text-sm hover:bg-blue-500 hover:text-white hover:border-blue-500 transition-colors">9:16</button>
+                        </div>
+                    </div>
+                    <div class="space-y-6">
+                        <h3 class="font-semibold text-gray-700 flex items-center gap-2"><span class="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-xs">2</span> Novas Dimensões</h3>
+                        <div class="flex items-center gap-4">
+                            <div class="w-full">
+                                <label class="block text-xs font-medium text-gray-500 mb-1 ml-4">Nova Largura (W2)</label>
+                                <input type="number" id="ar-w2" value="1280" class="glass-input w-full" oninput="calculateAspectRatio('w2')">
+                            </div>
+                            <span class="text-gray-400 font-bold mt-5">x</span>
+                            <div class="w-full">
+                                <label class="block text-xs font-medium text-gray-500 mb-1 ml-4">Nova Altura (H2)</label>
+                                <input type="number" id="ar-h2" value="720" class="glass-input w-full" oninput="calculateAspectRatio('h2')">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-12 bg-gray-50 rounded-3xl p-6 border border-gray-100 flex items-center justify-center min-h-[200px] overflow-hidden gap-3">
+                    <div id="ar-visual-box" class="bg-blue-500 rounded-xl shadow-lg transition-all duration-300 flex items-center justify-center text-white font-mono text-sm cursor-pointer" style="width: 160px; height: 90px;">
+                        16:9
+                    </div>
+
+                    <div id="ar-visual-box-2" class="bg-blue-500 rounded-xl shadow-lg transition-all duration-300 flex items-center justify-center text-white font-mono text-sm cursor-pointer" style="width: 160px; height: 90px;">
+                        16 / 9
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TOOL: API TESTER ================= -->
+        <div id="view-api-tester" class="hidden fade-in w-full">
+            <div class="glass-panel p-6 md:p-8">
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="p-3 bg-green-50 rounded-full text-emerald-500"><i data-lucide="globe" class="w-6 h-6"></i></div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">API Tester Rest</h2>
+                        <p class="text-sm text-gray-500">Envie requisições HTTP facilmente.</p>
+                    </div>
+                </div>
+                <div class="flex flex-col md:flex-row gap-4 mb-6">
+                    <select id="api-method" class="glass-input w-full md:w-32 font-semibold text-gray-700 cursor-pointer">
+                        <option value="GET">GET</option>
+                        <option value="POST">POST</option>
+                        <option value="PUT">PUT</option>
+                        <option value="PATCH">PATCH</option>
+                        <option value="DELETE">DELETE</option>
+                    </select>
+                    <input type="text" id="api-url" placeholder="https://api.exemplo.com/v1/users" class="glass-input w-full font-mono text-sm" value="https://jsonplaceholder.typicode.com/users/1">
+                    <button onclick="sendApiRequest()" class="glass-pill px-8 bg-emerald-500 text-white font-medium hover:bg-emerald-600 border-emerald-500 shadow-md flex items-center gap-2 flex-shrink-0">
+                        <span>Enviar</span>
+                        <i data-lucide="send" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div class="inner-card p-4">
+                            <h3 class="text-sm font-semibold text-gray-700 mb-2">Headers (JSON)</h3>
+                            <textarea id="api-headers" class="w-full bg-white outline-none font-mono text-xs text-gray-600 resize-y h-24 p-3 rounded-xl border border-gray-200 focus:border-emerald-300 transition-colors" placeholder='{&#10;  "Content-Type": "application/json"&#10;}'></textarea>
+                        </div>
+                        <div class="inner-card p-4">
+                            <h3 class="text-sm font-semibold text-gray-700 mb-2">Body (JSON)</h3>
+                            <textarea id="api-body" class="w-full bg-white outline-none font-mono text-xs text-gray-600 resize-y h-32 p-3 rounded-xl border border-gray-200 focus:border-emerald-300 transition-colors" placeholder='{&#10;  "nome": "Tommy",&#10;  "tech": "HTML/CSS/JS"&#10;}'></textarea>
+                        </div>
+                    </div>
+                    <div class="inner-card p-4 flex flex-col h-full min-h-[300px]">
+                        <div class="flex items-center justify-between mb-2 pb-2 border-b border-gray-200">
+                            <h3 class="text-sm font-semibold text-gray-700">Response</h3>
+                            <div class="flex items-center gap-3 text-xs">
+                                <span id="api-status" class="font-mono bg-gray-50 px-2 py-1 rounded-md text-gray-500 shadow-sm border border-gray-100">Status: ---</span>
+                                <span id="api-time" class="font-mono bg-gray-50 px-2 py-1 rounded-md text-gray-500 shadow-sm border border-gray-100">Tempo: ---</span>
+                            </div>
+                        </div>
+                        <pre id="api-response" class="font-mono text-xs text-gray-700 flex-1 overflow-auto p-2 bg-gray-50/50 rounded-lg">Aguardando requisição...</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TOOL: JSON-LD GENERATOR ================= -->
+        <div id="view-json-ld" class="hidden fade-in w-full">
+            <div class="glass-panel p-6 md:p-8">
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="p-3 bg-purple-50 rounded-full text-purple-500"><i data-lucide="code-2" class="w-6 h-6"></i></div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Gerador de Schema JSON-LD</h2>
+                        <p class="text-sm text-gray-500">Preencha os campos para gerar o código estruturado para SEO.</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <div class="lg:col-span-5 space-y-5">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 mb-1 ml-4 uppercase tracking-wider">Tipo de Schema</label>
+                            <select id="schema-type" class="glass-input w-full font-medium text-gray-700 cursor-pointer" onchange="updateSchemaForm()">
+                                <option value="WebSite">WebSite</option>
+                                <option value="Article">Article (Artigo)</option>
+                                <option value="Person">Person (Pessoa)</option>
+                                <option value="Organization">Organization (Empresa)</option>
+                                <option value="Product">Product (Produto)</option>
+                                <option value="LocalBusiness">Local Business (Negócio Local)</option>
+                                <option value="Event">Event (Evento)</option>
+                                <option value="JobPosting">Job Posting (Vaga de Emprego)</option>
+                                <option value="FAQPage">FAQ Page (Perguntas Freq.)</option>
+                            </select>
+                        </div>
+                        <div id="schema-form-container" class="space-y-4 max-h-[500px] overflow-y-auto overflow-x-visible pr-2 pb-4">
+                            <!-- Fields dinâmicos -->
+                        </div>
+                    </div>
+                    <div class="lg:col-span-7 flex flex-col h-full">
+                        <div class="inner-card p-4 flex-1 flex flex-col relative bg-[#1E1E1E] border-gray-800">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="text-sm font-semibold text-gray-300">Código Gerado</h3>
+                                <button onclick="copyToClipboard('schema-output', 'schema-copy-btn')" id="schema-copy-btn" class="text-gray-400 hover:text-white transition-colors flex items-center gap-1 text-xs glass-pill px-3 py-1 bg-white/5 border-white/10">
+                                    <i data-lucide="copy" class="w-3 h-3"></i> Copiar
+                                </button>
+                            </div>
+                            <pre id="schema-output" class="font-mono text-sm text-[#D4D4D4] flex-1 overflow-auto p-4 bg-[#1e1e1e] rounded-xl border border-white/10 selection:bg-purple-500/40"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TOOL: BASE64 ================= -->
+        <div id="view-base64" class="hidden fade-in w-full max-w-4xl mx-auto">
+            <div class="glass-panel p-6 md:p-8">
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="p-3 bg-orange-50 rounded-full text-orange-500"><i data-lucide="file-key-2" class="w-6 h-6"></i></div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Base64 Encode & Decode</h2>
+                        <p class="text-sm text-gray-500">Converta texto simples para Base64 e vice-versa.</p>
+                    </div>
+                </div>
+                <div class="flex justify-center mb-6">
+                    <div class="glass-pill p-1 inline-flex bg-gray-100/50">
+                        <button id="btn-b64-enc" onclick="setBase64Mode('encode')" class="px-6 py-2 rounded-full text-sm font-medium bg-white shadow-sm text-orange-500 transition-all border border-gray-100">Codificar (Encode)</button>
+                        <button id="btn-b64-dec" onclick="setBase64Mode('decode')" class="px-6 py-2 rounded-full text-sm font-medium text-gray-500 hover:text-gray-900 transition-all">Decodificar (Decode)</button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label id="lbl-b64-in" class="block text-sm font-semibold text-gray-700 ml-4">Texto de Entrada</label>
+                        <textarea id="b64-input" oninput="processBase64()" class="inner-card w-full h-64 p-4 outline-none resize-none cursor-text focus:border-orange-300 text-gray-700 bg-white" placeholder="Digite algo aqui..."></textarea>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center ml-4 pr-4">
+                            <label id="lbl-b64-out" class="block text-sm font-semibold text-gray-700">Resultado</label>
+                            <button onclick="copyToClipboardInput('b64-output')" class="text-orange-500 hover:text-orange-600 text-xs font-medium flex items-center gap-1">
+                                <i data-lucide="copy" class="w-3 h-3"></i> Copiar
+                            </button>
+                        </div>
+                        <textarea id="b64-output" readonly class="inner-card w-full h-64 p-4 outline-none resize-none cursor-text bg-gray-50 text-gray-700 font-mono text-sm border-gray-200"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TOOL: COLOR CONVERTER ================= -->
+        <div id="view-color-conv" class="hidden fade-in w-full max-w-2xl mx-auto">
+            <div class="glass-panel p-6 md:p-8">
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="p-3 bg-pink-50 rounded-full text-pink-500"><i data-lucide="palette" class="w-6 h-6"></i></div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Conversor de Cores</h2>
+                        <p class="text-sm text-gray-500">Converta HEX para RGB e HSL.</p>
+                    </div>
+                </div>
+                <div class="flex flex-col items-center">
+                    <div class="relative group mb-8">
+                        <div id="color-display" class="w-32 h-32 rounded-full border-4 border-gray-200 shadow-xl flex items-center justify-center transition-colors duration-200" style="background-color: #ec4899;">
+                            <input type="color" id="color-picker" value="#ec4899" class="opacity-0 absolute inset-0 w-full h-full cursor-pointer" oninput="updateColorsFromPicker()">
+                        </div>
+                        <div class="absolute -bottom-3 left-1/2 -translate-x-1/2 glass-pill px-3 py-1 text-xs text-gray-600 shadow-sm pointer-events-none whitespace-nowrap bg-white">
+                            Clique para escolher
+                        </div>
+                    </div>
+                    <div class="w-full space-y-4">
+                        <div class="flex items-center gap-3">
+                            <label class="w-12 text-right text-xs font-bold text-gray-500">HEX</label>
+                            <input type="text" id="color-hex" value="#EC4899" class="glass-input flex-1 font-mono uppercase bg-white" oninput="updateColorsFromHex()">
+                            <button onclick="copyToClipboardInput('color-hex')" class="p-3 glass-pill text-gray-500 hover:text-pink-500 bg-white"><i data-lucide="copy" class="w-4 h-4"></i></button>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <label class="w-12 text-right text-xs font-bold text-gray-500">RGB</label>
+                            <input type="text" id="color-rgb" value="rgb(236, 72, 153)" readonly class="glass-input flex-1 font-mono bg-gray-50">
+                            <button onclick="copyToClipboardInput('color-rgb')" class="p-3 glass-pill text-gray-500 hover:text-pink-500 bg-white"><i data-lucide="copy" class="w-4 h-4"></i></button>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <label class="w-12 text-right text-xs font-bold text-gray-500">HSL</label>
+                            <input type="text" id="color-hsl" value="hsl(330, 81%, 60%)" readonly class="glass-input flex-1 font-mono bg-gray-50">
+                            <button onclick="copyToClipboardInput('color-hsl')" class="p-3 glass-pill text-gray-500 hover:text-pink-500 bg-white"><i data-lucide="copy" class="w-4 h-4"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TOOL: UUID GENERATOR ================= -->
+        <div id="view-uuid" class="hidden fade-in w-full max-w-2xl mx-auto">
+            <div class="glass-panel p-6 md:p-8">
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="p-3 bg-cyan-50 rounded-full text-cyan-500"><i data-lucide="fingerprint" class="w-6 h-6"></i></div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">UUID Generator</h2>
+                        <p class="text-sm text-gray-500">Gere múltiplos UUIDs em massa (v4 ou v7).</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="flex-1">
+                        <label class="block text-xs font-medium text-gray-500 mb-1 ml-4">Versão</label>
+                        <select id="uuid-version" class="glass-input w-full bg-white font-semibold text-gray-700 cursor-pointer">
+                            <option value="v7" selected>v7 (Tempo + Aleatório)</option>
+                            <option value="v4">v4 (Aleatório)</option>
+                        </select>
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-xs font-medium text-gray-500 mb-1 ml-4">Quantidade</label>
+                        <input type="number" id="uuid-qty" value="1" min="1" max="100" class="glass-input w-full bg-white">
+                    </div>
+                    <button onclick="generateUUIDs()" class="glass-pill mt-5 px-6 py-3 bg-cyan-500 text-white font-medium hover:bg-cyan-600 border-cyan-500 shadow-md flex items-center gap-2">
+                        <span>Gerar</span>
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                <div class="relative">
+                    <button onclick="copyToClipboardInput('uuid-output')" class="absolute top-3 right-3 text-gray-400 hover:text-cyan-500 transition-colors">
+                        <i data-lucide="copy" class="w-5 h-5"></i>
+                    </button>
+                    <textarea id="uuid-output" readonly class="inner-card w-full h-64 p-4 pt-10 outline-none resize-none bg-gray-50 text-gray-700 font-mono text-sm leading-relaxed border-gray-200"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TOOL: CODE MINIFIER ================= -->
+        <div id="view-minify" class="hidden fade-in w-full max-w-4xl mx-auto">
+            <div class="glass-panel p-6 md:p-8">
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="p-3 bg-red-50 rounded-full text-red-500"><i data-lucide="minimize-2" class="w-6 h-6"></i></div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Code Minifier</h2>
+                        <p class="text-sm text-gray-500">Remova espaços e comentários de HTML, CSS e JS.</p>
+                    </div>
+                </div>
+                <div class="mb-6">
+                    <select id="minify-lang" class="glass-input w-full md:w-64 font-semibold text-gray-700 cursor-pointer">
+                        <option value="css">CSS</option>
+                        <option value="html">HTML</option>
+                        <option value="js">JavaScript (Básico)</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="block text-sm font-semibold text-gray-700 ml-4">Código Original</label>
+                        <textarea id="minify-in" class="inner-card w-full h-80 p-4 outline-none resize-none font-mono text-xs focus:border-red-300 text-gray-700 bg-white" placeholder="Cole seu código aqui..."></textarea>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center ml-4 pr-4">
+                            <label class="block text-sm font-semibold text-gray-700">Minificado</label>
+                            <button onclick="copyToClipboardInput('minify-out')" class="text-red-500 hover:text-red-600 text-xs font-medium flex items-center gap-1">
+                                <i data-lucide="copy" class="w-3 h-3"></i> Copiar
+                            </button>
+                        </div>
+                        <textarea id="minify-out" readonly class="inner-card w-full h-80 p-4 outline-none resize-none bg-gray-50 text-gray-700 font-mono text-xs border-gray-200"></textarea>
+                    </div>
+                </div>
+                <div class="mt-6 text-center">
+                    <button onclick="minifyCode()" class="glass-pill px-10 py-3 bg-red-500 text-white font-medium hover:bg-red-600 border-red-500 shadow-md inline-flex items-center gap-2">
+                        <span>Minificar Código</span>
+                        <i data-lucide="zap" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TOOL: CODE BEAUTIFIER ================= -->
+        <div id="view-beautify" class="hidden fade-in w-full max-w-4xl mx-auto">
+            <div class="glass-panel p-6 md:p-8">
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="p-3 bg-indigo-50 rounded-full text-indigo-500"><i data-lucide="align-left" class="w-6 h-6"></i></div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Code Beautifier</h2>
+                        <p class="text-sm text-gray-500">Formate e idente códigos desorganizados.</p>
+                    </div>
+                </div>
+                <div class="flex flex-col md:flex-row gap-4 mb-6">
+                    <select id="beautify-lang" class="glass-input w-full md:w-64 font-semibold text-gray-700 cursor-pointer">
+                        <option value="js">JavaScript / JSON</option>
+                        <option value="html">HTML</option>
+                        <option value="css">CSS</option>
+                    </select>
+                    <select id="beautify-indent" class="glass-input w-full md:w-48 font-semibold text-gray-700 cursor-pointer">
+                        <option value="2">2 Espaços</option>
+                        <option value="4" selected>4 Espaços</option>
+                        <option value="8">8 Espaços</option>
+                        <option value="\t">Tabulação</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="block text-sm font-semibold text-gray-700 ml-4">Código Bagunçado</label>
+                        <textarea id="beautify-in" class="inner-card w-full h-80 p-4 outline-none resize-none font-mono text-xs focus:border-indigo-300 text-gray-700 bg-white" placeholder="Cole seu código aqui..."></textarea>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center ml-4 pr-4">
+                            <label class="block text-sm font-semibold text-gray-700">Formatado</label>
+                            <button onclick="copyToClipboardInput('beautify-out')" class="text-indigo-500 hover:text-indigo-600 text-xs font-medium flex items-center gap-1">
+                                <i data-lucide="copy" class="w-3 h-3"></i> Copiar
+                            </button>
+                        </div>
+                        <textarea id="beautify-out" readonly class="inner-card w-full h-80 p-4 outline-none resize-none bg-gray-50 text-gray-700 font-mono text-xs border-gray-200 whitespace-pre"></textarea>
+                    </div>
+                </div>
+                <div class="mt-6 text-center">
+                    <button onclick="formatCode()" class="glass-pill px-10 py-3 bg-indigo-500 text-white font-medium hover:bg-indigo-600 border-indigo-500 shadow-md inline-flex items-center gap-2">
+                        <span>Formatar Código</span>
+                        <i data-lucide="sparkles" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TOOL: CRON GENERATOR ================= -->
+        <div id="view-cron" class="hidden fade-in w-full max-w-3xl mx-auto">
+            <div class="glass-panel p-6 md:p-8">
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="p-3 bg-teal-50 rounded-full text-teal-500"><i data-lucide="clock-4" class="w-6 h-6"></i></div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Cron Expression Generator</h2>
+                        <p class="text-sm text-gray-500">Gere agendamentos Cron facilmente.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1 text-center">Minuto</label>
+                        <input type="text" id="cron-min" value="*" oninput="updateCron()" class="glass-input w-full text-center font-mono font-bold text-teal-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1 text-center">Hora</label>
+                        <input type="text" id="cron-hour" value="*" oninput="updateCron()" class="glass-input w-full text-center font-mono font-bold text-teal-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1 text-center">Dia (Mês)</label>
+                        <input type="text" id="cron-dom" value="*" oninput="updateCron()" class="glass-input w-full text-center font-mono font-bold text-teal-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 mb-1 text-center">Mês</label>
+                        <input type="text" id="cron-mon" value="*" oninput="updateCron()" class="glass-input w-full text-center font-mono font-bold text-teal-600">
+                    </div>
+                    <div class="col-span-2 md:col-span-1">
+                        <label class="block text-xs font-bold text-gray-500 mb-1 text-center">Dia (Semana)</label>
+                        <input type="text" id="cron-dow" value="*" oninput="updateCron()" class="glass-input w-full text-center font-mono font-bold text-teal-600">
+                    </div>
+                </div>
+
+                <div class="inner-card p-6 text-center relative border-teal-100 bg-teal-50/30">
+                    <h3 class="text-sm font-semibold text-gray-500 mb-2 uppercase tracking-wider">Expressão Gerada</h3>
+                    <div class="text-4xl font-mono font-bold text-gray-800 tracking-widest mb-4" id="cron-result">
+                        * * * * *
+                    </div>
+                    <button onclick="copyCron()" class="glass-pill px-6 py-2 bg-white text-teal-600 font-medium hover:bg-teal-50 inline-flex items-center gap-2">
+                        <i data-lucide="copy" class="w-4 h-4"></i> <span id="btn-cron-copy">Copiar Expressão</span>
+                    </button>
+                </div>
+                
+                <div class="mt-6 flex flex-wrap gap-2 justify-center">
+                    <button onclick="setCron('*/5', '*', '*', '*', '*')" class="px-3 py-1.5 glass-pill text-xs hover:bg-teal-500 hover:text-white transition-colors">A cada 5 min</button>
+                    <button onclick="setCron('0', '*', '*', '*', '*')" class="px-3 py-1.5 glass-pill text-xs hover:bg-teal-500 hover:text-white transition-colors">A cada hora exata</button>
+                    <button onclick="setCron('0', '0', '*', '*', '*')" class="px-3 py-1.5 glass-pill text-xs hover:bg-teal-500 hover:text-white transition-colors">Todo dia meia-noite</button>
+                    <button onclick="setCron('0', '12', '*', '*', '1-5')" class="px-3 py-1.5 glass-pill text-xs hover:bg-teal-500 hover:text-white transition-colors">Meio dia (Seg-Sex)</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TOOL: HASH GENERATOR ================= -->
+        <div id="view-hash" class="hidden fade-in w-full max-w-3xl mx-auto">
+            <div class="glass-panel p-6 md:p-8">
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="p-3 bg-yellow-50 rounded-full text-yellow-500"><i data-lucide="hash" class="w-6 h-6"></i></div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Hash Generator</h2>
+                        <p class="text-sm text-gray-500">Gere hashes criptográficos no navegador.</p>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-gray-700 ml-4 mb-2">Texto de Entrada</label>
+                    <textarea id="hash-in" oninput="generateHashes()" class="inner-card w-full h-32 p-4 outline-none resize-none cursor-text focus:border-yellow-300 text-gray-700 bg-white" placeholder="Digite o texto para gerar o hash..."></textarea>
+                </div>
+
+                <div class="space-y-4">
+                    <!-- SHA-1 -->
+                    <div>
+                        <div class="flex justify-between items-center ml-2 mb-1">
+                            <label class="text-xs font-bold text-gray-500">SHA-1</label>
+                            <button onclick="copyToClipboardInput('hash-sha1')" class="text-yellow-600 hover:text-yellow-700 text-xs flex items-center gap-1"><i data-lucide="copy" class="w-3 h-3"></i> Copiar</button>
+                        </div>
+                        <input type="text" id="hash-sha1" readonly class="glass-input w-full font-mono text-sm bg-gray-50">
+                    </div>
+                    <!-- SHA-256 -->
+                    <div>
+                        <div class="flex justify-between items-center ml-2 mb-1">
+                            <label class="text-xs font-bold text-gray-500">SHA-256</label>
+                            <button onclick="copyToClipboardInput('hash-sha256')" class="text-yellow-600 hover:text-yellow-700 text-xs flex items-center gap-1"><i data-lucide="copy" class="w-3 h-3"></i> Copiar</button>
+                        </div>
+                        <input type="text" id="hash-sha256" readonly class="glass-input w-full font-mono text-sm bg-gray-50">
+                    </div>
+                    <!-- SHA-512 -->
+                    <div>
+                        <div class="flex justify-between items-center ml-2 mb-1">
+                            <label class="text-xs font-bold text-gray-500">SHA-512</label>
+                            <button onclick="copyToClipboardInput('hash-sha512')" class="text-yellow-600 hover:text-yellow-700 text-xs flex items-center gap-1"><i data-lucide="copy" class="w-3 h-3"></i> Copiar</button>
+                        </div>
+                        <input type="text" id="hash-sha512" readonly class="glass-input w-full font-mono text-sm bg-gray-50">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TOOL: IMAGE CONVERTER ================= -->
+        <div id="view-img-conv" class="hidden fade-in w-full max-w-4xl mx-auto">
+            <div class="glass-panel p-6 md:p-8">
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="p-3 bg-rose-50 rounded-full text-rose-500"><i data-lucide="image" class="w-6 h-6"></i></div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Image Converter</h2>
+                        <p class="text-sm text-gray-500">Converta arquivos de imagem para PNG, JPG ou WEBP (Processamento local).</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Configurações e Upload -->
+                    <div class="space-y-6">
+                        <div id="dropzone-img-conv" class="border-2 border-dashed border-gray-200 rounded-2xl p-8 text-center bg-gray-50/50 hover:bg-rose-50/50 hover:border-rose-300 transition-colors cursor-pointer relative" onclick="document.getElementById('img-conv-input').click()">
+                            <i data-lucide="upload-cloud" class="w-10 h-10 text-gray-400 mx-auto mb-3 pointer-events-none"></i>
+                            <p class="text-sm font-semibold text-gray-700 mb-1 pointer-events-none">Clique ou arraste uma imagem aqui</p>
+                            <p class="text-xs text-gray-500 pointer-events-none">Suporta JPG, PNG, WEBP, GIF</p>
+                            <input type="file" id="img-conv-input" accept="image/*" class="hidden" onchange="processImgConvFile(event.target.files[0])">
+                        </div>
+
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1 ml-2">Formato de Saída</label>
+                                <select id="img-conv-format" class="glass-input w-full bg-white font-medium text-gray-700 cursor-pointer">
+                                    <option value="image/png">PNG</option>
+                                    <option value="image/jpeg">JPG / JPEG</option>
+                                    <option value="image/webp">WEBP</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1 ml-2">Qualidade (Apenas JPG/WEBP)</label>
+                                <input type="range" id="img-conv-quality" min="0.1" max="1" step="0.1" value="0.9" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-rose-500">
+                                <div class="flex justify-between text-xs text-gray-400 mt-1">
+                                    <span>Menor tamanho</span>
+                                    <span>Melhor Qualidade</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button onclick="convertAndDownloadImage()" class="glass-pill w-full px-6 py-3 bg-rose-500 text-white font-medium hover:bg-rose-600 border-rose-500 shadow-md flex justify-center items-center gap-2">
+                            <i data-lucide="download" class="w-5 h-5"></i>
+                            <span>Baixar Imagem Convertida</span>
+                        </button>
+                    </div>
+
+                    <!-- Preview -->
+                    <div class="inner-card p-4 flex flex-col h-full min-h-[300px] border-gray-100 bg-gray-50/50">
+                        <h3 class="text-sm font-semibold text-gray-700 mb-2 border-b border-gray-100 pb-2">Preview da Imagem Original</h3>
+                        <div class="flex-1 flex items-center justify-center overflow-hidden bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZWVlIi8+CjxyZWN0IHg9IjQiIHk9IjQiIHdpZHRoPSI0IiBoZWlnaHQ9IjQiIGZpbGw9IiNlZWUiLz4KPC9zdmc+')] rounded-xl border border-gray-200">
+                            <img id="img-conv-preview" class="max-w-full max-h-64 object-contain hidden" alt="Preview">
+                            <span id="img-conv-placeholder" class="text-sm text-gray-400">Nenhuma imagem selecionada</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TOOL: IMAGE RESIZER ================= -->
+        <div id="view-img-resize" class="hidden fade-in w-full max-w-4xl mx-auto">
+            <div class="glass-panel p-6 md:p-8">
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="p-3 bg-violet-50 rounded-full text-violet-500"><i data-lucide="crop" class="w-6 h-6"></i></div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Image Resizer</h2>
+                        <p class="text-sm text-gray-500">Altere as dimensões de imagens (Width x Height).</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Configurações -->
+                    <div class="space-y-6">
+                        <div id="dropzone-img-resize" class="border-2 border-dashed border-gray-200 rounded-2xl p-8 text-center bg-gray-50/50 hover:bg-violet-50/50 hover:border-violet-300 transition-colors cursor-pointer relative" onclick="document.getElementById('img-resize-input').click()">
+                            <i data-lucide="upload-cloud" class="w-10 h-10 text-gray-400 mx-auto mb-3 pointer-events-none"></i>
+                            <p class="text-sm font-semibold text-gray-700 mb-1 pointer-events-none">Clique ou arraste uma imagem aqui</p>
+                            <p class="text-xs text-gray-500 pointer-events-none">Suporta JPG, PNG, WEBP, GIF</p>
+                            <input type="file" id="img-resize-input" accept="image/*" class="hidden" onchange="processImgResizeFile(event.target.files[0])">
+                        </div>
+
+                        <div class="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                            <div class="flex items-center gap-4 mb-4">
+                                <div class="flex-1">
+                                    <label class="block text-xs font-bold text-gray-500 mb-1">Largura (px)</label>
+                                    <input type="number" id="img-resize-w" class="glass-input w-full bg-white font-mono text-sm" oninput="handleResizeChange('w')">
+                                </div>
+                                <div class="pt-5 text-gray-300"><i data-lucide="x" class="w-4 h-4"></i></div>
+                                <div class="flex-1">
+                                    <label class="block text-xs font-bold text-gray-500 mb-1">Altura (px)</label>
+                                    <input type="number" id="img-resize-h" class="glass-input w-full bg-white font-mono text-sm" oninput="handleResizeChange('h')">
+                                </div>
+                            </div>
+                            <label class="flex items-center gap-2 cursor-pointer text-sm text-gray-600 font-medium">
+                                <input type="checkbox" id="img-resize-lock" checked class="w-4 h-4 text-violet-600 rounded border-gray-300 focus:ring-violet-500" onchange="toggleResizeLock()">
+                                <i data-lucide="lock" class="w-4 h-4 text-violet-500"></i> Manter proporção
+                            </label>
+                        </div>
+
+                        <button onclick="downloadResizedImage()" class="glass-pill w-full px-6 py-3 bg-violet-500 text-white font-medium hover:bg-violet-600 border-violet-500 shadow-md flex justify-center items-center gap-2">
+                            <i data-lucide="download" class="w-5 h-5"></i>
+                            <span id="img-resize-btn-text">Baixar Imagem (PNG)</span>
+                        </button>
+                    </div>
+
+                    <!-- Preview -->
+                    <div class="inner-card p-4 flex flex-col h-full min-h-[300px] border-gray-100 bg-gray-50/50">
+                        <div class="flex items-center justify-between border-b border-gray-100 pb-2 mb-2">
+                            <h3 class="text-sm font-semibold text-gray-700">Preview</h3>
+                            <span id="img-resize-original-info" class="text-xs text-gray-400 font-mono">Original: -- x --</span>
+                        </div>
+                        <div class="flex-1 flex items-center justify-center overflow-hidden bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZWVlIi8+CjxyZWN0IHg9IjQiIHk9IjQiIHdpZHRoPSI0IiBoZWlnaHQ9IjQiIGZpbGw9IiNlZWUiLz4KPC9zdmc+')] rounded-xl border border-gray-200">
+                            <canvas id="img-resize-canvas" class="max-w-full max-h-64 hidden shadow-sm"></canvas>
+                            <span id="img-resize-placeholder" class="text-sm text-gray-400">Envie uma imagem</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TOOL: SVG VIEW & EDITOR ================= -->
+        <div id="view-svg-editor" class="hidden fade-in w-full max-w-6xl mx-auto">
+            <div class="glass-panel p-6 md:p-8 flex flex-col">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-4">
+                        <div class="p-3 bg-amber-50 rounded-full text-amber-500"><i data-lucide="file-code-2" class="w-6 h-6"></i></div>
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900">SVG View & Editor</h2>
+                            <p class="text-sm text-gray-500">Edite código SVG e exporte como imagem ou Data URI.</p>
+                        </div>
+                    </div>
+                    <!-- Ações Rápidas -->
+                    <div class="hidden lg:flex items-center gap-2">
+                        <button onclick="downloadSvgAs('png')" class="glass-pill px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:text-amber-600 flex items-center gap-1 shadow-sm"><i data-lucide="download" class="w-4 h-4"></i> .PNG</button>
+                        <button onclick="downloadSvgAs('webp')" class="glass-pill px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:text-amber-600 flex items-center gap-1 shadow-sm"><i data-lucide="download" class="w-4 h-4"></i> .WEBP</button>
+                        <button onclick="downloadSvgAs('svg')" class="glass-pill px-4 py-2 bg-amber-500 text-sm font-medium text-white hover:bg-amber-600 border-amber-500 flex items-center gap-1 shadow-md"><i data-lucide="download" class="w-4 h-4"></i> .SVG</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full min-h-[500px]">
+                    <!-- Editor -->
+                    <div class="flex flex-col h-full">
+                        <div class="flex items-center justify-between mb-2 px-2">
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Código SVG</label>
+                            <div class="flex items-center gap-3">
+                                <button onclick="minifySvg()" class="text-amber-500 hover:text-amber-600 text-xs font-medium flex items-center gap-1"><i data-lucide="wand-2" class="w-3 h-3"></i> Limpar & Minificar</button>
+                                <button onclick="copyToClipboardInput('svg-editor-in')" class="text-amber-500 hover:text-amber-600 text-xs font-medium flex items-center gap-1"><i data-lucide="copy" class="w-3 h-3"></i> Copiar</button>
+                            </div>
+                        </div>
+                        <textarea id="svg-editor-in" oninput="updateSvgPreview()" class="inner-card flex-1 w-full p-4 outline-none resize-none font-mono text-xs focus:border-amber-300 transition-all text-gray-800 bg-[#fafafa]" placeholder='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">\n  <circle cx="50" cy="50" r="40" fill="#f59e0b" />\n</svg>'></textarea>
+                    </div>
+
+                    <!-- Visualizador -->
+                    <div class="flex flex-col h-full">
+                        <div class="flex items-center justify-between mb-2 px-2">
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Visualização ao Vivo</label>
+                            <button onclick="copySvgDataUri()" id="btn-svg-uri" class="text-amber-500 hover:text-amber-600 text-xs font-medium flex items-center gap-1"><i data-lucide="link" class="w-3 h-3"></i> Copiar Data URI</button>
+                        </div>
+                        <div class="inner-card flex-1 w-full flex items-center justify-center p-4 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCI+CjxyZWN0IHdpZHRoPSIxMiIgaGVpZ2h0PSIxMiIgZmlsbD0iI2Y1ZjVmNSIvPgo8cmVjdCB4PSIxMiIgeT0iMTIiIHdpZHRoPSIxMiIgaGVpZ2h0PSIxMiIgZmlsbD0iI2Y1ZjVmNSIvPgo8L3N2Zz4=')] border-gray-200 overflow-hidden relative">
+                            <div id="svg-preview-container" class="w-full h-full flex items-center justify-center">
+                                <!-- Renderizado via JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ações Mobile -->
+                <div class="flex lg:hidden flex-wrap items-center gap-2 mt-6 justify-center">
+                    <button onclick="downloadSvgAs('png')" class="glass-pill px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:text-amber-600 flex items-center gap-1 shadow-sm"><i data-lucide="download" class="w-4 h-4"></i> .PNG</button>
+                    <button onclick="downloadSvgAs('webp')" class="glass-pill px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:text-amber-600 flex items-center gap-1 shadow-sm"><i data-lucide="download" class="w-4 h-4"></i> .WEBP</button>
+                    <button onclick="downloadSvgAs('svg')" class="glass-pill px-4 py-2 bg-amber-500 text-sm font-medium text-white hover:bg-amber-600 border-amber-500 flex items-center gap-1 shadow-md"><i data-lucide="download" class="w-4 h-4"></i> .SVG</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= RELATED TOOLS (GLOBAL) ================= -->
+        <div id="related-tools-section" class="hidden fade-in w-full max-w-5xl mx-auto mt-16 pt-12 border-t border-gray-200">
+            <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <i data-lucide="layers" class="w-5 h-5 text-accent"></i> Ferramentas Relacionadas
+            </h3>
+            <div id="related-tools-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Preenchido via JS -->
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        lucide.createIcons();
+
+        const viewTitles = {
+            'home': 'DevTools Hub',
+            'aspect-ratio': 'Aspect Ratio',
+            'api-tester': 'API Tester',
+            'json-ld': 'JSON-LD Schema',
+            'base64': 'Base64 Tool',
+            'color-conv': 'Color Converter',
+            'uuid': 'UUID Generator',
+            'minify': 'Code Minifier',
+            'beautify': 'Code Beautifier',
+            'cron': 'Cron Generator',
+            'hash': 'Hash Generator',
+            'img-conv': 'Image Converter',
+            'img-resize': 'Image Resizer',
+            'svg-editor': 'SVG View & Editor'
+        };
+
+        let pinnedTools = JSON.parse(localStorage.getItem('pinnedTools')) || [];
+
+        // ================= URL MANAGER =================
+        function updateUrlParam(key, value, replace = false) {
+            const url = new URL(window.location);
+            if (value) {
+                url.searchParams.set(key, value);
+            } else {
+                url.searchParams.delete(key);
+            }
+            if (replace) {
+                window.history.replaceState({}, '', url);
+            } else {
+                window.history.pushState({}, '', url);
+            }
+        }
+
+        // ================= SPA & FILTERING =================
+        function navigate(viewId, pushHistory = true) {
+            document.querySelectorAll('[id^="view-"]').forEach(el => {
+                el.classList.add('hidden');
+                el.classList.remove('fade-in');
+            });
+            
+            const targetView = document.getElementById(`view-${viewId}`);
+            if(!targetView) return;
+
+            targetView.classList.remove('hidden');
+            void targetView.offsetWidth; 
+            targetView.classList.add('fade-in');
+
+            const backBtn = document.getElementById('back-btn');
+            const navTitle = document.getElementById('nav-title');
+            
+            navTitle.innerText = viewTitles[viewId];
+
+            if (viewId === 'home') {
+                backBtn.classList.add('hidden');
+                document.getElementById('related-tools-section').classList.add('hidden');
+                if(pushHistory) updateUrlParam('tool', null, false);
+                renderPins(); 
+            } else {
+                backBtn.classList.remove('hidden');
+                if(pushHistory) updateUrlParam('tool', viewId, false);
+                renderRelatedTools(viewId);
+            }
+            
+            window.scrollTo(0,0);
+            if(viewId === 'uuid') generateUUIDs();
+        }
+
+        function filterTools(updateURL = true) {
+            const query = document.getElementById('search-tools').value.toLowerCase();
+            
+            if (updateURL) updateUrlParam('q', query, true);
+
+            const activeFilterBtn = document.querySelector('.filter-btn.active');
+            let activeFilter = 'all';
+            if(activeFilterBtn) activeFilter = activeFilterBtn.getAttribute('onclick').match(/'([^']+)'/)[1];
+            
+            let pinnedVisible = 0;
+            let allVisible = 0;
+
+            document.querySelectorAll('.tool-card').forEach(card => {
+                // Ignore related cards
+                if (card.closest('#related-tools-section')) return;
+
+                const name = card.dataset.name.toLowerCase();
+                const categories = card.dataset.cat.split(' ');
+                
+                const matchesSearch = name.includes(query);
+                const matchesCat = activeFilter === 'all' || categories.includes(activeFilter);
+                
+                if (matchesSearch && matchesCat) {
+                    card.style.display = 'flex';
+                    if(card.parentElement.id === 'pinned-grid') pinnedVisible++;
+                    if(card.parentElement.id === 'tools-grid') allVisible++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            document.getElementById('pinned-section').style.display = (pinnedTools.length > 0 && pinnedVisible > 0) ? 'block' : 'none';
+            document.getElementById('all-tools-title').style.display = (allVisible > 0 && pinnedTools.length > 0) ? 'block' : 'none';
+            
+            if(pinnedTools.length === 0) {
+                document.getElementById('pinned-section').style.display = 'none';
+                document.getElementById('all-tools-title').style.display = 'none';
+            }
+        }
+
+        function setFilter(cat, btnEl) {
+            document.querySelectorAll('.filter-btn').forEach(b => {
+                b.classList.remove('active', 'bg-accent', 'text-white', 'border-accent');
+                b.classList.add('bg-white', 'text-gray-600');
+            });
+            btnEl.classList.add('active', 'bg-accent', 'text-white', 'border-accent');
+            btnEl.classList.remove('bg-white', 'text-gray-600');
+            filterTools();
+        }
+
+        function togglePin(event, toolId) {
+            event.stopPropagation(); 
+            const idx = pinnedTools.indexOf(toolId);
+            if(idx > -1) {
+                pinnedTools.splice(idx, 1);
+            } else {
+                pinnedTools.push(toolId);
+            }
+            localStorage.setItem('pinnedTools', JSON.stringify(pinnedTools));
+            renderPins();
+        }
+
+        function renderPins() {
+            const pinnedGrid = document.getElementById('pinned-grid');
+            const toolsGrid = document.getElementById('tools-grid');
+            
+            document.querySelectorAll('.tool-card').forEach(card => {
+                if (card.closest('#related-tools-section')) return; // Ignore clones
+
+                const toolId = card.id;
+                const pinIcon = card.querySelector('svg.pin-icon') || card.querySelector('i.pin-icon'); 
+                
+                if(pinnedTools.includes(toolId)) {
+                    pinnedGrid.appendChild(card);
+                    if(pinIcon) {
+                        pinIcon.classList.add('fill-current');
+                        pinIcon.classList.remove('text-gray-300', 'text-accent');
+                        pinIcon.style.color = card.style.getPropertyValue('--hover-color').trim();
+                    }
+                } else {
+                    toolsGrid.appendChild(card);
+                    if(pinIcon) {
+                        pinIcon.classList.remove('fill-current', 'text-accent');
+                        pinIcon.classList.add('text-gray-300');
+                        pinIcon.style.color = '';
+                    }
+                }
+            });
+            filterTools(false);
+        }
+
+        function renderRelatedTools(currentViewId) {
+            const currentCard = document.getElementById(`card-${currentViewId}`);
+            if (!currentCard) return;
+
+            const currentCats = currentCard.dataset.cat.split(' ');
+            const relatedGrid = document.getElementById('related-tools-grid');
+            relatedGrid.innerHTML = '';
+            let count = 0;
+
+            document.querySelectorAll('.tool-card').forEach(card => {
+                if (card.closest('#related-tools-section')) return; // Ignore clones
+                if (card.id === currentCard.id) return; // Skip self
+                
+                const cardCats = card.dataset.cat.split(' ');
+                // Check intersection between arrays
+                const hasCommonCat = cardCats.some(c => currentCats.includes(c) && c !== 'utilities' && c !== 'dev'); // Ignore too generic tags
+                
+                if (hasCommonCat && count < 3) {
+                    const clone = card.cloneNode(true);
+                    clone.id = ''; // Remove ID to prevent issues
+                    clone.style.display = 'flex'; // Ensure it's visible if it was hidden by search
+                    
+                    // Remove pin icon from related cards to avoid confusion
+                    const pinBtn = clone.querySelector('button');
+                    if(pinBtn) pinBtn.remove();
+                    
+                    relatedGrid.appendChild(clone);
+                    count++;
+                }
+            });
+
+            const relatedSection = document.getElementById('related-tools-section');
+            if (count > 0) {
+                relatedSection.classList.remove('hidden');
+            } else {
+                relatedSection.classList.add('hidden');
+            }
+        }
+
+        // ================= HELPERS GERAIS =================
+        function copyToClipboard(elementId, btnId) {
+            const el = document.getElementById(elementId);
+            const text = el.dataset.raw || el.innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById(btnId);
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = `<i data-lucide="check" class="w-3 h-3"></i> Copiado!`;
+                lucide.createIcons();
+                setTimeout(() => { btn.innerHTML = originalHTML; lucide.createIcons(); }, 2000);
+            });
+        }
+
+        function copyToClipboardInput(inputId) {
+            const el = document.getElementById(inputId);
+            el.select();
+            document.execCommand('copy');
+            const btn = el.previousElementSibling ? el.previousElementSibling.querySelector('button') : null;
+            if(btn) {
+                const old = btn.innerHTML;
+                btn.innerHTML = '<i data-lucide="check" class="w-3 h-3"></i> OK!';
+                lucide.createIcons();
+                setTimeout(() => { btn.innerHTML = old; lucide.createIcons(); }, 1000);
+            } else {
+                const nextBtn = el.nextElementSibling;
+                if(nextBtn && nextBtn.tagName === 'BUTTON') {
+                    nextBtn.classList.add('text-green-500');
+                    setTimeout(() => nextBtn.classList.remove('text-green-500'), 1000);
+                }
+            }
+            window.getSelection().removeAllRanges();
+        }
+
+        // ================= ASPECT RATIO =================
+        function calculateAspectRatio(changedElement) {
+            const w1 = parseFloat(document.getElementById('ar-w1').value) || 0;
+            const h1 = parseFloat(document.getElementById('ar-h1').value) || 0;
+            const w2El = document.getElementById('ar-w2');
+            const h2El = document.getElementById('ar-h2');
+            let w2 = parseFloat(w2El.value) || 0;
+            let h2 = parseFloat(h2El.value) || 0;
+            if (w1 === 0 || h1 === 0) return;
+            const ratio = w1 / h1;
+
+            if (changedElement === 'w1' || changedElement === 'h1') h2El.value = Math.round(w2 / ratio);
+            else if (changedElement === 'w2') h2El.value = Math.round(w2 / ratio);
+            else if (changedElement === 'h2') w2El.value = Math.round(h2 * ratio);
+
+            updateVisualBox(w1, h1);
+        }
+        function setRatio(w, h) {
+            document.getElementById('ar-w1').value = w;
+            document.getElementById('ar-h1').value = h;
+            calculateAspectRatio('w1');
+        }
+        function updateVisualBox(w, h) {
+            const box = document.getElementById('ar-visual-box');
+            const box2 = document.getElementById('ar-visual-box-2');
+            let ratio = w / h;
+            let renderW = 160;
+            let renderH = 160 / ratio;
+            if (renderH > 160) { renderH = 160; renderW = 160 * ratio; }
+            box.style.width = `${renderW}px`;
+            box.style.height = `${renderH}px`;
+            box2.style.width = `${renderW}px`;
+            box2.style.height = `${renderH}px`;
+            const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+            const divisor = gcd(w, h);
+            box.innerText = `${w/divisor}:${h/divisor}`;
+            box2.innerText = `${w/divisor} / ${h/divisor}`;
+        }
+        document.getElementById('ar-visual-box').addEventListener('click', function() {
+            const text = this.innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = this.innerText;
+                this.innerText = 'Copiado!';
+                setTimeout(() => {
+                    this.innerText = originalText;
+                }, 1500);
+            });
+        });
+
+        document.getElementById('ar-visual-box-2').addEventListener('click', function() {
+            const text = this.innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = this.innerText;
+                this.innerText = 'Copiado!';
+                setTimeout(() => {
+                    this.innerText = originalText;
+                }, 1500);
+            });
+        });
+
+        // ================= API TESTER =================
+        async function sendApiRequest() {
+            const url = document.getElementById('api-url').value;
+            const method = document.getElementById('api-method').value;
+            const headersRaw = document.getElementById('api-headers').value;
+            const bodyRaw = document.getElementById('api-body').value;
+            const responseEl = document.getElementById('api-response');
+            const statusEl = document.getElementById('api-status');
+            const timeEl = document.getElementById('api-time');
+
+            responseEl.innerText = "Carregando...";
+            statusEl.innerText = "Status: ---";
+            statusEl.className = "font-mono bg-gray-50 px-2 py-1 rounded-md text-gray-500 shadow-sm border border-gray-100";
+            
+            let headers = {};
+            try { if (headersRaw.trim() !== '') headers = JSON.parse(headersRaw); } 
+            catch (e) { responseEl.innerText = "Erro: JSON de Headers inválido."; return; }
+
+            const options = { method, headers };
+            if (method !== 'GET' && method !== 'HEAD' && bodyRaw.trim() !== '') {
+                try { JSON.parse(bodyRaw); options.body = bodyRaw; } 
+                catch(e) { options.body = bodyRaw; }
+            }
+
+            const startTime = performance.now();
+            try {
+                const response = await fetch(url, options);
+                const timeTaken = Math.round(performance.now() - startTime);
+
+                statusEl.innerText = `Status: ${response.status} ${response.statusText}`;
+                statusEl.className = response.ok ? "font-mono bg-green-100 text-green-700 px-2 py-1 rounded-md shadow-sm border border-green-200" : "font-mono bg-red-100 text-red-700 px-2 py-1 rounded-md shadow-sm border border-red-200";
+                timeEl.innerText = `Tempo: ${timeTaken}ms`;
+
+                const contentType = response.headers.get("content-type");
+                let responseData;
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    const json = await response.json();
+                    responseData = JSON.stringify(json, null, 2);
+                    responseEl.innerHTML = syntaxHighlightJSON(responseData);
+                } else {
+                    responseData = await response.text();
+                    responseEl.innerText = responseData;
+                }
+            } catch (error) {
+                statusEl.innerText = "Erro";
+                statusEl.className = "font-mono bg-red-100 text-red-700 px-2 py-1 rounded-md shadow-sm border border-red-200";
+                responseEl.innerText = `Erro de Conexão ou CORS.\nDetalhes: ${error.message}`;
+            }
+        }
+        function syntaxHighlightJSON(json) {
+            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                let cls = 'text-blue-600';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) cls = 'text-purple-600 font-semibold';
+                    else cls = 'text-green-600';
+                } else if (/true|false/.test(match)) cls = 'text-orange-500';
+                else if (/null/.test(match)) cls = 'text-gray-500';
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+        }
+
+        // ================= JSON-LD & CUSTOM SELECT =================
+        let faqQuestions = 1;
+
+        const countriesData = [
+            { code: 'BR', name: 'Brasil', flag: '🇧🇷' },
+            { code: 'US', name: 'Estados Unidos', flag: '🇺🇸' },
+            { code: 'PT', name: 'Portugal', flag: '🇵🇹' },
+            { code: 'AR', name: 'Argentina', flag: '🇦🇷' },
+            { code: 'CA', name: 'Canadá', flag: '🇨🇦' },
+            { code: 'GB', name: 'Reino Unido', flag: '🇬🇧' },
+            { code: 'FR', name: 'França', flag: '🇫🇷' },
+            { code: 'DE', name: 'Alemanha', flag: '🇩🇪' },
+            { code: 'ES', name: 'Espanha', flag: '🇪🇸' },
+            { code: 'IT', name: 'Itália', flag: '🇮🇹' },
+            { code: 'MX', name: 'México', flag: '🇲🇽' },
+            { code: 'CL', name: 'Chile', flag: '🇨🇱' },
+            { code: 'CO', name: 'Colômbia', flag: '🇨🇴' },
+            { code: 'UY', name: 'Uruguai', flag: '🇺🇾' },
+            { code: 'PE', name: 'Peru', flag: '🇵🇪' },
+            { code: 'JP', name: 'Japão', flag: '🇯🇵' },
+            { code: 'CN', name: 'China', flag: '🇨🇳' },
+            { code: 'IN', name: 'Índia', flag: '🇮🇳' },
+            { code: 'AU', name: 'Austrália', flag: '🇦🇺' },
+            { code: 'ZA', name: 'África do Sul', flag: '🇿🇦' },
+            { code: 'RU', name: 'Rússia', flag: '🇷🇺' },
+            { code: 'KR', name: 'Coreia do Sul', flag: '🇰🇷' },
+            { code: 'NL', name: 'Holanda', flag: '🇳🇱' },
+            { code: 'CH', name: 'Suíça', flag: '🇨🇭' },
+            { code: 'SE', name: 'Suécia', flag: '🇸🇪' },
+            { code: 'NO', name: 'Noruega', flag: '🇳🇴' },
+            { code: 'DK', name: 'Dinamarca', flag: '🇩🇰' },
+            { code: 'FI', name: 'Finlândia', flag: '🇫🇮' },
+            { code: 'IE', name: 'Irlanda', flag: '🇮🇪' },
+            { code: 'NZ', name: 'Nova Zelândia', flag: '🇳🇿' },
+            { code: 'SG', name: 'Singapura', flag: '🇸🇬' },
+            { code: 'AE', name: 'Emirados Árabes', flag: '🇦🇪' },
+            { code: 'IL', name: 'Israel', flag: '🇮🇱' }
+        ];
+
+        const schemaConfigs = {
+            'WebSite': [
+                { id: 'name', label: 'Nome do Site', type: 'text', req: true },
+                { id: 'url', label: 'URL do Site', type: 'url', req: true, placeholder: 'https://seusite.com.br' }
+            ],
+            'Article': [
+                { id: 'headline', label: 'Título do Artigo', type: 'text', req: true },
+                { id: 'image', label: 'URL da Imagem (Capa)', type: 'url', req: true },
+                { id: 'authorName', label: 'Nome do Autor', type: 'text', req: true },
+                { id: 'publisherName', label: 'Nome da Editora/Site', type: 'text', req: true },
+                { id: 'publisherLogo', label: 'URL Logo da Editora', type: 'url', req: false },
+                { id: 'datePublished', label: 'Data de Publicação', type: 'date', req: true }
+            ],
+            'Person': [
+                { id: 'name', label: 'Nome', type: 'text', req: true, value: 'Gabriell Henrique (Tommy)' },
+                { id: 'jobTitle', label: 'Profissão', type: 'text', req: true, value: 'Programador Web' },
+                { id: 'url', label: 'URL do Perfil/Site', type: 'url', req: false },
+                { id: 'image', label: 'URL da Foto', type: 'url', req: false }
+            ],
+            'Organization': [
+                { id: 'name', label: 'Nome da Empresa', type: 'text', req: true },
+                { id: 'url', label: 'URL do Site', type: 'url', req: true },
+                { id: 'logo', label: 'URL do Logo', type: 'url', req: true },
+                { id: 'contactPhone', label: 'Telefone de Contato', type: 'text', req: false }
+            ],
+            'Product': [
+                { id: 'name', label: 'Nome do Produto', type: 'text', req: true },
+                { id: 'image', label: 'URL da Imagem', type: 'url', req: true },
+                { id: 'description', label: 'Descrição', type: 'text', req: true },
+                { id: 'brand', label: 'Marca', type: 'text', req: true },
+                { id: 'price', label: 'Preço (Ex: 99.90)', type: 'number', req: true },
+                { id: 'currency', label: 'Moeda (Ex: BRL, USD)', type: 'text', req: true, value: 'BRL' }
+            ],
+            'LocalBusiness': [
+                { id: 'name', label: 'Nome do Negócio', type: 'text', req: true },
+                { id: 'image', label: 'URL da Imagem/Fachada', type: 'url', req: true },
+                { id: 'telephone', label: 'Telefone', type: 'text', req: true },
+                { id: 'streetAddress', label: 'Endereço (Rua, Número)', type: 'text', req: true },
+                { id: 'addressLocality', label: 'Cidade', type: 'text', req: true, value: 'Blumenau' },
+                { id: 'addressRegion', label: 'Estado (Sigla)', type: 'text', req: true, value: 'SC' }
+            ],
+            'Event': [
+                { id: 'name', label: 'Nome do Evento', type: 'text', req: true },
+                { id: 'startDate', label: 'Data/Hora de Início', type: 'datetime-local', req: true },
+                { id: 'endDate', label: 'Data/Hora de Fim', type: 'datetime-local', req: true },
+                { id: 'locationName', label: 'Nome do Local', type: 'text', req: true },
+                { id: 'locationAddress', label: 'Endereço Completo do Local', type: 'text', req: true },
+                { id: 'description', label: 'Descrição do Evento', type: 'text', req: false },
+                { id: 'image', label: 'URL do Banner/Imagem', type: 'url', req: false }
+            ],
+            'JobPosting': [
+                { id: 'title', label: 'Título da Vaga', type: 'text', req: true },
+                { id: 'description', label: 'Descrição da Vaga', type: 'text', req: true },
+                { id: 'datePosted', label: 'Data de Publicação', type: 'date', req: true },
+                { id: 'validThrough', label: 'Válido Até', type: 'date', req: false },
+                { id: 'hiringOrgName', label: 'Nome da Empresa', type: 'text', req: true },
+                { id: 'remote', label: 'Vaga Home Office (Remota)?', type: 'select', options: ['Não', 'Sim'], req: true },
+                { id: 'jobCountry', label: 'País da Vaga', type: 'country-select', req: true, value: 'BR' },
+                { id: 'jobLocality', label: 'Cidade da Vaga', type: 'text', req: true },
+                { id: 'jobRegion', label: 'Estado da Vaga', type: 'text', req: true }
+            ]
+        };
+
+        function updateSchemaForm() {
+            const type = document.getElementById('schema-type').value;
+            const container = document.getElementById('schema-form-container');
+            container.innerHTML = '';
+            
+            if(type === 'FAQPage') {
+                faqQuestions = 1;
+                appendFaqField(container, 1);
+                
+                const btn = document.createElement('button');
+                btn.id = 'faq-add-btn';
+                btn.className = "text-xs font-bold text-purple-600 bg-purple-50 px-4 py-2 rounded-full hover:bg-purple-100 mt-2";
+                btn.innerText = "+ Adicionar Pergunta";
+                btn.onclick = () => {
+                    faqQuestions++;
+                    appendFaqField(container, faqQuestions);
+                    container.appendChild(btn); 
+                };
+                container.appendChild(btn);
+            } else {
+                const fields = schemaConfigs[type];
+                fields.forEach(f => {
+                    const val = f.value || '';
+                    if(f.type === 'select') {
+                        const opts = f.options.map(o => `<option value="${o}">${o}</option>`).join('');
+                        container.innerHTML += `
+                            <div id="wrapper-${f.id}">
+                                <label class="block text-xs font-semibold text-gray-600 mb-1 ml-4">${f.label} ${f.req ? '<span class="text-red-500">*</span>' : ''}</label>
+                                <select id="schema-${f.id}" class="glass-input w-full text-sm bg-white" onchange="generateJsonLd()">${opts}</select>
+                            </div>
+                        `;
+                    } else if(f.type === 'country-select') {
+                        const defaultCountry = countriesData.find(c => c.code === val) || countriesData[0];
+                        container.innerHTML += `
+                            <div id="wrapper-${f.id}" class="relative country-select-wrapper">
+                                <label class="block text-xs font-semibold text-gray-600 mb-1 ml-4">${f.label} ${f.req ? '<span class="text-red-500">*</span>' : ''}</label>
+                                <input type="hidden" id="schema-${f.id}" value="${defaultCountry.code}">
+                                <div onclick="toggleCountryDropdown('${f.id}')" class="glass-input w-full text-sm bg-white cursor-pointer flex justify-between items-center">
+                                    <span id="display-${f.id}" class="flex items-center gap-2"><span class="text-base">${defaultCountry.flag}</span> <span>${defaultCountry.name}</span></span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><path d="m6 9 6 6 6-6"/></svg>
+                                </div>
+                                <div id="dropdown-${f.id}" class="hidden absolute z-50 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden">
+                                    <div class="p-2 border-b border-gray-100 bg-gray-50/50">
+                                        <input type="text" id="search-${f.id}" oninput="filterCountries('${f.id}')" placeholder="Buscar país..." class="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg outline-none focus:border-accent transition-colors">
+                                    </div>
+                                    <ul id="list-${f.id}" class="max-h-48 overflow-y-auto p-1 text-gray-700">
+                                    </ul>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        container.innerHTML += `
+                            <div id="wrapper-${f.id}">
+                                <label class="block text-xs font-semibold text-gray-600 mb-1 ml-4">${f.label} ${f.req ? '<span class="text-red-500">*</span>' : ''}</label>
+                                <input type="${f.type}" id="schema-${f.id}" value="${val}" placeholder="${f.placeholder||''}" class="glass-input w-full text-sm bg-white" oninput="generateJsonLd()">
+                            </div>
+                        `;
+                    }
+                });
+            }
+            generateJsonLd();
+            if(typeof lucide !== 'undefined') lucide.createIcons();
+        }
+
+        function toggleCountryDropdown(id) {
+            const dropdown = document.getElementById(`dropdown-${id}`);
+            const isHidden = dropdown.classList.contains('hidden');
+            
+            document.querySelectorAll('[id^="dropdown-schema-"]').forEach(el => el.classList.add('hidden'));
+
+            if (isHidden) {
+                dropdown.classList.remove('hidden');
+                document.getElementById(`search-${id}`).value = ''; 
+                populateCountryList(id, ''); 
+                setTimeout(() => document.getElementById(`search-${id}`).focus(), 50);
+            }
+        }
+
+        function populateCountryList(id, query) {
+            const list = document.getElementById(`list-${id}`);
+            list.innerHTML = '';
+            const lowerQuery = query.toLowerCase();
+            const filtered = countriesData.filter(c => 
+                c.name.toLowerCase().includes(lowerQuery) || c.code.toLowerCase().includes(lowerQuery)
+            );
+
+            if(filtered.length === 0) {
+                list.innerHTML = `<li class="px-3 py-3 text-sm text-gray-400 text-center">Nenhum país encontrado</li>`;
+                return;
+            }
+
+            filtered.forEach(c => {
+                const li = document.createElement('li');
+                li.className = "px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer rounded-lg flex items-center gap-2 transition-colors";
+                li.innerHTML = `<span class="text-base">${c.flag}</span> <span>${c.name}</span> <span class="text-xs text-gray-400 ml-auto">${c.code}</span>`;
+                li.onclick = (e) => {
+                    e.stopPropagation(); 
+                    document.getElementById(`schema-${id}`).value = c.code;
+                    document.getElementById(`display-${id}`).innerHTML = `<span class="flex items-center gap-2"><span class="text-base">${c.flag}</span> <span>${c.name}</span></span>`;
+                    document.getElementById(`dropdown-${id}`).classList.add('hidden');
+                    generateJsonLd();
+                };
+                list.appendChild(li);
+            });
+        }
+
+        function filterCountries(id) {
+            const query = document.getElementById(`search-${id}`).value;
+            populateCountryList(id, query);
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.country-select-wrapper')) {
+                document.querySelectorAll('[id^="dropdown-schema-"]').forEach(el => el.classList.add('hidden'));
+            }
+        });
+
+        function appendFaqField(container, index) {
+            const div = document.createElement('div');
+            div.className = "p-4 bg-white rounded-xl border border-gray-100 space-y-3 mb-3 shadow-sm";
+            div.innerHTML = `
+                <div class="font-bold text-xs text-purple-600 uppercase tracking-wide">Pergunta ${index}</div>
+                <div>
+                    <input type="text" id="schema-faq-q${index}" placeholder="Qual é a pergunta?" class="glass-input w-full text-sm bg-gray-50" oninput="generateJsonLd()">
+                </div>
+                <div>
+                    <textarea id="schema-faq-a${index}" placeholder="Resposta para a pergunta..." class="glass-input w-full text-sm bg-gray-50 rounded-xl resize-none h-20" oninput="generateJsonLd()"></textarea>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        function getVal(id) {
+            const el = document.getElementById(`schema-${id}`);
+            return el ? el.value : '';
+        }
+
+        function generateJsonLd() {
+            const type = document.getElementById('schema-type').value;
+            let schema = { "@context": "https://schema.org", "@type": type };
+
+            if(type === 'WebSite') {
+                schema.name = getVal('name'); schema.url = getVal('url');
+            } else if(type === 'Article') {
+                schema.headline = getVal('headline'); schema.image = [getVal('image')];
+                schema.datePublished = getVal('datePublished');
+                schema.author = { "@type": "Person", "name": getVal('authorName') };
+                schema.publisher = { "@type": "Organization", "name": getVal('publisherName'), "logo": { "@type": "ImageObject", "url": getVal('publisherLogo') }};
+            } else if(type === 'Person') {
+                schema.name = getVal('name'); schema.jobTitle = getVal('jobTitle');
+                if(getVal('url')) schema.url = getVal('url');
+                if(getVal('image')) schema.image = getVal('image');
+            } else if(type === 'Organization') {
+                schema.name = getVal('name'); schema.url = getVal('url'); schema.logo = getVal('logo');
+                if(getVal('contactPhone')) schema.contactPoint = { "@type": "ContactPoint", "telephone": getVal('contactPhone'), "contactType": "customer service" };
+            } else if(type === 'Product') {
+                schema.name = getVal('name'); schema.image = getVal('image'); schema.description = getVal('description');
+                schema.brand = { "@type": "Brand", "name": getVal('brand') };
+                schema.offers = { "@type": "Offer", "priceCurrency": getVal('currency'), "price": getVal('price'), "availability": "https://schema.org/InStock" };
+            } else if(type === 'LocalBusiness') {
+                schema.name = getVal('name'); schema.image = getVal('image'); schema.telephone = getVal('telephone');
+                schema.address = { "@type": "PostalAddress", "streetAddress": getVal('streetAddress'), "addressLocality": getVal('addressLocality'), "addressRegion": getVal('addressRegion') };
+            } else if(type === 'Event') {
+                schema.name = getVal('name'); schema.startDate = getVal('startDate'); schema.endDate = getVal('endDate');
+                schema.location = { "@type": "Place", "name": getVal('locationName'), "address": { "@type": "PostalAddress", "streetAddress": getVal('locationAddress') } };
+                if(getVal('description')) schema.description = getVal('description');
+                if(getVal('image')) schema.image = [getVal('image')];
+            } else if(type === 'JobPosting') {
+                const isRemote = getVal('remote') === 'Sim';
+                
+                const wrapLoc = document.getElementById('wrapper-jobLocality');
+                const wrapReg = document.getElementById('wrapper-jobRegion');
+                if(wrapLoc) wrapLoc.style.display = isRemote ? 'none' : 'block';
+                if(wrapReg) wrapReg.style.display = isRemote ? 'none' : 'block';
+
+                schema.title = getVal('title'); schema.description = getVal('description'); schema.datePosted = getVal('datePosted');
+                if(getVal('validThrough')) schema.validThrough = getVal('validThrough');
+                schema.hiringOrganization = { "@type": "Organization", "name": getVal('hiringOrgName') };
+                
+                if (isRemote) {
+                    schema.jobLocationType = "TELECOMMUTE";
+                    schema.applicantLocationRequirements = { "@type": "Country", "name": getVal('jobCountry') };
+                } else {
+                    schema.jobLocation = { 
+                        "@type": "Place", 
+                        "address": { 
+                            "@type": "PostalAddress", 
+                            "addressLocality": getVal('jobLocality'), 
+                            "addressRegion": getVal('jobRegion'),
+                            "addressCountry": getVal('jobCountry')
+                        } 
+                    };
+                }
+            } else if(type === 'FAQPage') {
+                schema.mainEntity = [];
+                for(let i=1; i<=faqQuestions; i++) {
+                    const q = getVal(`faq-q${i}`);
+                    const a = getVal(`faq-a${i}`);
+                    if(q && a) {
+                        schema.mainEntity.push({
+                            "@type": "Question",
+                            "name": q,
+                            "acceptedAnswer": { "@type": "Answer", "text": a }
+                        });
+                    }
+                }
+            }
+
+            const outputScript = `<script type="application/ld+json">\n${JSON.stringify(schema, null, 2)}\n<\/script>`;
+            let colored = outputScript
+                .replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"(.*?)"(?=:)/g, '<span class="text-[#9CDCFE]">"$1"</span>')
+                .replace(/:\s"(.*?)"/g, ': <span class="text-[#CE9178]">"$1"</span>')
+                .replace(/&lt;script/g, '<span class="text-[#569CD6]">&lt;script</span>')
+                .replace(/&lt;\/script&gt;/g, '<span class="text-[#569CD6]">&lt;/script&gt;</span>')
+                .replace(/type=/g, '<span class="text-[#9CDCFE]">type=</span>');
+            
+            document.getElementById('schema-output').innerHTML = colored;
+            document.getElementById('schema-output').dataset.raw = outputScript;
+        }
+
+        // ================= BASE64 =================
+        let b64Mode = 'encode';
+        function setBase64Mode(mode) {
+            b64Mode = mode;
+            const btnEnc = document.getElementById('btn-b64-enc');
+            const btnDec = document.getElementById('btn-b64-dec');
+            const lblIn = document.getElementById('lbl-b64-in');
+            
+            if (mode === 'encode') {
+                btnEnc.className = "px-6 py-2 rounded-full text-sm font-medium bg-white shadow-sm text-orange-500 transition-all border border-gray-100";
+                btnDec.className = "px-6 py-2 rounded-full text-sm font-medium text-gray-500 hover:text-gray-900 bg-transparent transition-all";
+                lblIn.innerText = "Texto de Entrada (Limpo)";
+            } else {
+                btnDec.className = "px-6 py-2 rounded-full text-sm font-medium bg-white shadow-sm text-orange-500 transition-all border border-gray-100";
+                btnEnc.className = "px-6 py-2 rounded-full text-sm font-medium text-gray-500 hover:text-gray-900 bg-transparent transition-all";
+                lblIn.innerText = "Texto de Entrada (Base64)";
+            }
+            processBase64();
+        }
+        function processBase64() {
+            const input = document.getElementById('b64-input').value;
+            const output = document.getElementById('b64-output');
+            if (!input) { output.value = ''; return; }
+            try {
+                if (b64Mode === 'encode') { output.value = btoa(unescape(encodeURIComponent(input))); output.classList.remove('text-red-500'); } 
+                else { output.value = decodeURIComponent(escape(atob(input))); output.classList.remove('text-red-500'); }
+            } catch (e) {
+                output.value = "Erro: Entrada inválida."; output.classList.add('text-red-500');
+            }
+        }
+
+        // ================= COLOR CONVERTER =================
+        function hexToRgb(h){ let r=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h); return r?{r:parseInt(r[1],16),g:parseInt(r[2],16),b:parseInt(r[3],16)}:null;}
+        function rgbToHsl(r,g,b){r/=255;g/=255;b/=255;let x=Math.max(r,g,b),n=Math.min(r,g,b);let h,s,l=(x+n)/2;if(x==n)h=s=0;else{let d=x-n;s=l>0.5?d/(2-x-n):d/(x+n);switch(x){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;case b:h=(r-g)/d+4;break;}h/=6;}return{h:Math.round(h*360),s:Math.round(s*100),l:Math.round(l*100)};}
+        function updateColorUI(hex) {
+            if(!/^#?([a-f\d]{6}|[a-f\d]{3})$/i.test(hex)) return;
+            if(hex.length === 4) hex = '#'+hex[1]+hex[1]+hex[2]+hex[2]+hex[3]+hex[3];
+            if(!hex.startsWith('#')) hex = '#' + hex;
+            const rgb = hexToRgb(hex); if(!rgb) return;
+            const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+            document.getElementById('color-display').style.backgroundColor = hex;
+            document.getElementById('color-picker').value = hex;
+            document.getElementById('color-hex').value = hex.toUpperCase();
+            document.getElementById('color-rgb').value = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+            document.getElementById('color-hsl').value = `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
+        }
+        function updateColorsFromPicker() { updateColorUI(document.getElementById('color-picker').value); }
+        function updateColorsFromHex() { updateColorUI(document.getElementById('color-hex').value); }
+
+        // ================= UUID =================
+        function generateUUIDv7() {
+            const bytes = new Uint8Array(16);
+            crypto.getRandomValues(bytes);
+            const time = Date.now();
+            bytes[0] = Math.floor(time / 2 ** 40) & 0xFF;
+            bytes[1] = Math.floor(time / 2 ** 32) & 0xFF;
+            bytes[2] = Math.floor(time / 2 ** 24) & 0xFF;
+            bytes[3] = Math.floor(time / 2 ** 16) & 0xFF;
+            bytes[4] = Math.floor(time / 2 ** 8) & 0xFF;
+            bytes[5] = time & 0xFF;
+            bytes[6] = (bytes[6] & 0x0F) | 0x70; 
+            bytes[8] = (bytes[8] & 0x3F) | 0x80; 
+            const hex = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+            return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
+        }
+
+        function generateUUIDs() {
+            const qty = parseInt(document.getElementById('uuid-qty').value) || 1;
+            const version = document.getElementById('uuid-version').value;
+            const maxQty = Math.min(qty, 500); 
+            let uuids = [];
+            for(let i = 0; i < maxQty; i++) {
+                if(version === 'v4') {
+                    uuids.push(crypto.randomUUID());
+                } else {
+                    uuids.push(generateUUIDv7());
+                }
+            }
+            document.getElementById('uuid-output').value = uuids.join('\n');
+        }
+
+        // ================= CODE MINIFIER =================
+        function minifyCode() {
+            const lang = document.getElementById('minify-lang').value;
+            const input = document.getElementById('minify-in').value;
+            const outputEl = document.getElementById('minify-out');
+            
+            if(!input.trim()) { outputEl.value = ''; return; }
+            
+            let minified = input;
+            if(lang === 'css') {
+                minified = minified.replace(/\/\*[\s\S]*?\*\//g, '') 
+                    .replace(/\s+/g, ' ') 
+                    .replace(/\s*([\{\}\:\;\,])\s*/g, '$1') 
+                    .replace(/;\}/g, '}') 
+                    .trim();
+            } else if(lang === 'html') {
+                minified = minified.replace(/<!--[\s\S]*?-->/g, '') 
+                    .replace(/\n/g, '') 
+                    .replace(/\s+/g, ' ') 
+                    .replace(/>\s+</g, '><') 
+                    .trim();
+            } else if(lang === 'js') {
+                minified = minified.replace(/\/\*[\s\S]*?\*\//g, '') 
+                    .replace(/\/\/.*/g, '') 
+                    .replace(/\s+/g, ' ') 
+                    .replace(/\s*([\{\}\(\)\=\+\-\*\/\:\;\,\<\>\!\|\&])\s*/g, '$1') 
+                    .trim();
+            }
+            outputEl.value = minified;
+        }
+
+        // ================= CODE BEAUTIFIER =================
+        function formatCode() {
+            const lang = document.getElementById('beautify-lang').value;
+            const indentOpt = document.getElementById('beautify-indent').value;
+            const input = document.getElementById('beautify-in').value;
+            const outputEl = document.getElementById('beautify-out');
+
+            if(!input.trim()) { outputEl.value = ''; return; }
+
+            const options = {
+                indent_size: indentOpt === '\\t' ? 1 : parseInt(indentOpt),
+                indent_char: indentOpt === '\\t' ? '\t' : ' ',
+                max_preserve_newlines: 2,
+                preserve_newlines: true,
+                keep_array_indentation: false,
+                break_chained_methods: false,
+                space_before_conditional: true,
+                unescape_strings: false,
+                jslint_happy: false,
+                end_with_newline: false,
+                wrap_line_length: 0
+            };
+
+            let formatted = '';
+            try {
+                if(lang === 'js') formatted = js_beautify(input, options);
+                else if(lang === 'css') formatted = css_beautify(input, options);
+                else if(lang === 'html') formatted = html_beautify(input, options);
+                outputEl.value = formatted;
+            } catch(e) {
+                outputEl.value = "Erro ao formatar o código.";
+            }
+        }
+
+        // ================= CRON =================
+        function updateCron() {
+            const m = document.getElementById('cron-min').value || '*';
+            const h = document.getElementById('cron-hour').value || '*';
+            const dom = document.getElementById('cron-dom').value || '*';
+            const mon = document.getElementById('cron-mon').value || '*';
+            const dow = document.getElementById('cron-dow').value || '*';
+            document.getElementById('cron-result').innerText = `${m} ${h} ${dom} ${mon} ${dow}`;
+        }
+        function setCron(m, h, dom, mon, dow) {
+            document.getElementById('cron-min').value = m;
+            document.getElementById('cron-hour').value = h;
+            document.getElementById('cron-dom').value = dom;
+            document.getElementById('cron-mon').value = mon;
+            document.getElementById('cron-dow').value = dow;
+            updateCron();
+        }
+        function copyCron() {
+            const txt = document.getElementById('cron-result').innerText;
+            navigator.clipboard.writeText(txt).then(() => {
+                const btn = document.getElementById('btn-cron-copy');
+                btn.innerText = "Copiado!";
+                setTimeout(() => btn.innerText = "Copiar Expressão", 2000);
+            });
+        }
+
+        // ================= HASH GENERATOR =================
+        async function generateHashes() {
+            const text = document.getElementById('hash-in').value;
+            if(!text) {
+                document.getElementById('hash-sha1').value = '';
+                document.getElementById('hash-sha256').value = '';
+                document.getElementById('hash-sha512').value = '';
+                return;
+            }
+            const encoder = new TextEncoder();
+            const data = encoder.encode(text);
+            
+            // SHA-1
+            const hashBuffer1 = await crypto.subtle.digest('SHA-1', data);
+            document.getElementById('hash-sha1').value = bufferToHex(hashBuffer1);
+            
+            // SHA-256
+            const hashBuffer256 = await crypto.subtle.digest('SHA-256', data);
+            document.getElementById('hash-sha256').value = bufferToHex(hashBuffer256);
+
+            // SHA-512
+            const hashBuffer512 = await crypto.subtle.digest('SHA-512', data);
+            document.getElementById('hash-sha512').value = bufferToHex(hashBuffer512);
+        }
+
+        function bufferToHex(buffer) {
+            const hashArray = Array.from(new Uint8Array(buffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // ================= IMAGE CONVERTER =================
+        let currentImgConvSource = null;
+
+        function processImgConvFile(file) {
+            if (!file || !file.type.startsWith('image/')) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentImgConvSource = e.target.result;
+                const previewImg = document.getElementById('img-conv-preview');
+                const placeholder = document.getElementById('img-conv-placeholder');
+                
+                previewImg.src = currentImgConvSource;
+                previewImg.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function convertAndDownloadImage() {
+            if (!currentImgConvSource) {
+                alert("Por favor, selecione uma imagem primeiro.");
+                return;
+            }
+
+            const format = document.getElementById('img-conv-format').value;
+            const quality = parseFloat(document.getElementById('img-conv-quality').value);
+            const extension = format.split('/')[1]; 
+
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                
+                if (format === 'image/jpeg') {
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                }
+                
+                ctx.drawImage(img, 0, 0);
+
+                const dataUrl = canvas.toDataURL(format, quality);
+                triggerFileDownload(dataUrl, `converted_image.${extension === 'jpeg' ? 'jpg' : extension}`);
+            };
+            img.src = currentImgConvSource;
+        }
+
+        // ================= IMAGE RESIZER =================
+        let resizerImgObj = new Image();
+        let originalRatio = 1;
+        let currentResizeMimeType = 'image/png';
+        let currentResizeFilename = 'resized_image.png';
+
+        function processImgResizeFile(file) {
+            if (!file || !file.type.startsWith('image/')) return;
+            
+            currentResizeMimeType = file.type;
+            currentResizeFilename = file.name;
+            const ext = file.name.split('.').pop().toUpperCase();
+            document.getElementById('img-resize-btn-text').innerText = `Baixar Imagem (${ext})`;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                resizerImgObj.onload = function() {
+                    document.getElementById('img-resize-w').value = resizerImgObj.width;
+                    document.getElementById('img-resize-h').value = resizerImgObj.height;
+                    document.getElementById('img-resize-original-info').innerText = `Original: ${resizerImgObj.width} x ${resizerImgObj.height}`;
+                    originalRatio = resizerImgObj.width / resizerImgObj.height;
+                    
+                    document.getElementById('img-resize-placeholder').classList.add('hidden');
+                    drawResizePreview();
+                };
+                resizerImgObj.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleResizeChange(changed) {
+            if(!resizerImgObj.src) return;
+            const isLocked = document.getElementById('img-resize-lock').checked;
+            const wInput = document.getElementById('img-resize-w');
+            const hInput = document.getElementById('img-resize-h');
+
+            let w = parseFloat(wInput.value) || 0;
+            let h = parseFloat(hInput.value) || 0;
+
+            if (isLocked) {
+                if (changed === 'w') {
+                    hInput.value = Math.round(w / originalRatio);
+                } else if (changed === 'h') {
+                    wInput.value = Math.round(h * originalRatio);
+                }
+            }
+            drawResizePreview();
+        }
+
+        function toggleResizeLock() {
+            const isLocked = document.getElementById('img-resize-lock').checked;
+            if(isLocked && resizerImgObj.src) {
+                const w = parseFloat(document.getElementById('img-resize-w').value) || resizerImgObj.width;
+                document.getElementById('img-resize-h').value = Math.round(w / originalRatio);
+                drawResizePreview();
+            }
+        }
+
+        function drawResizePreview() {
+            const canvas = document.getElementById('img-resize-canvas');
+            const w = parseFloat(document.getElementById('img-resize-w').value) || resizerImgObj.width;
+            const h = parseFloat(document.getElementById('img-resize-h').value) || resizerImgObj.height;
+            
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(resizerImgObj, 0, 0, w, h);
+            canvas.classList.remove('hidden');
+        }
+
+        function downloadResizedImage() {
+            const canvas = document.getElementById('img-resize-canvas');
+            if(canvas.classList.contains('hidden')) {
+                alert("Envie uma imagem primeiro."); return;
+            }
+            
+            let ext = currentResizeMimeType.split('/')[1] || 'png';
+            if (ext === 'jpeg') ext = 'jpg';
+            let originalNameBase = currentResizeFilename.split('.').slice(0, -1).join('.') || 'imagem';
+            let outName = `${originalNameBase}_resized.${ext}`;
+            
+            triggerFileDownload(canvas.toDataURL(currentResizeMimeType), outName);
+        }
+
+        // ================= SVG VIEW & EDITOR =================
+        function updateSvgPreview() {
+            const code = document.getElementById('svg-editor-in').value;
+            const container = document.getElementById('svg-preview-container');
+            // Limpa o script injection pro html (básico)
+            let safeCode = code.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+            container.innerHTML = safeCode;
+
+            // Força o SVG inserido a respeitar os limites da caixa (Caso ele venha sem width/height)
+            const svgEl = container.querySelector('svg');
+            if(svgEl) {
+                svgEl.style.width = '100%';
+                svgEl.style.height = '100%';
+                svgEl.style.maxHeight = '100%';
+                svgEl.style.objectFit = 'contain';
+            }
+        }
+
+        function minifySvg() {
+            const inputEl = document.getElementById('svg-editor-in');
+            let code = inputEl.value;
+            if(!code.trim()) return;
+
+            // Remove comentários XML e espaços desnecessários
+            code = code.replace(/<!--[\s\S]*?-->/g, '');
+            // Remove DOCTYPE e XML declarators que poluem o código inline
+            code = code.replace(/<\?xml.*?\?>/gi, '');
+            code = code.replace(/<!DOCTYPE.*?>/gi, '');
+            // Remove ID, Class e atributos data-* inúteis (agressivo conforme solicitado)
+            code = code.replace(/\s+(id|class|data-[a-zA-Z0-9\-]+)="[^"]*"/g, '');
+            // Remove quebras de linha e formatações
+            code = code.replace(/\r?\n|\r|\t/g, '');
+            code = code.replace(/\s+/g, ' ');
+            // Remove grupos <g> vazios (roda 3x pra pegar grupos aninhados <g><g></g></g>)
+            for(let i=0; i<3; i++) code = code.replace(/<g[^>]*>\s*<\/g>/g, '');
+            // Remove espaços entre as tags ><
+            code = code.replace(/>\s+</g, '><');
+
+            inputEl.value = code.trim();
+            updateSvgPreview();
+            
+            // Feedback Visual
+            const btn = document.querySelector('button[onclick="minifySvg()"]');
+            const oldHtml = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="check" class="w-3 h-3"></i> Limpo!`;
+            lucide.createIcons();
+            setTimeout(() => { btn.innerHTML = oldHtml; lucide.createIcons(); }, 1500);
+        }
+
+        function copySvgDataUri() {
+            const code = document.getElementById('svg-editor-in').value;
+            if(!code.trim()) return;
+            const b64 = btoa(unescape(encodeURIComponent(code)));
+            const uri = `data:image/svg+xml;base64,${b64}`;
+            
+            navigator.clipboard.writeText(uri).then(() => {
+                const btn = document.getElementById('btn-svg-uri');
+                const old = btn.innerHTML;
+                btn.innerHTML = `<i data-lucide="check" class="w-3 h-3"></i> Copiado!`;
+                lucide.createIcons();
+                setTimeout(() => { btn.innerHTML = old; lucide.createIcons(); }, 2000);
+            });
+        }
+
+        function downloadSvgAs(format) {
+            const code = document.getElementById('svg-editor-in').value;
+            if(!code.trim()) return;
+
+            if (format === 'svg') {
+                const blob = new Blob([code], { type: 'image/svg+xml;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                triggerFileDownload(url, 'vector.svg');
+                URL.revokeObjectURL(url);
+                return;
+            }
+
+            // Converter para PNG / WEBP
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            const blob = new Blob([code], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+
+            img.onload = function() {
+                canvas.width = img.width || 512;
+                canvas.height = img.height || 512;
+                ctx.drawImage(img, 0, 0);
+                
+                const outUrl = canvas.toDataURL(`image/${format}`, 1.0);
+                triggerFileDownload(outUrl, `vector.${format}`);
+                URL.revokeObjectURL(url);
+            };
+            img.onerror = function() {
+                alert("Erro ao converter o SVG. Verifique se o código possui atributos de 'width' e 'height' válidos para a conversão.");
+            }
+            img.src = url;
+        }
+
+        // Helper genérico para download
+        function triggerFileDownload(uri, filename) {
+            const link = document.createElement('a');
+            link.href = uri;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // ================= DRAG AND DROP SETUP =================
+        function setupDragDropZones() {
+            // Image Converter
+            const dropConv = document.getElementById('dropzone-img-conv');
+            if(dropConv) {
+                dropConv.addEventListener('dragover', e => { e.preventDefault(); dropConv.classList.add('border-rose-400', 'bg-rose-50'); });
+                dropConv.addEventListener('dragleave', e => { e.preventDefault(); dropConv.classList.remove('border-rose-400', 'bg-rose-50'); });
+                dropConv.addEventListener('drop', e => {
+                    e.preventDefault();
+                    dropConv.classList.remove('border-rose-400', 'bg-rose-50');
+                    if(e.dataTransfer.files[0]) processImgConvFile(e.dataTransfer.files[0]);
+                });
+            }
+
+            // Image Resizer
+            const dropResize = document.getElementById('dropzone-img-resize');
+            if(dropResize) {
+                dropResize.addEventListener('dragover', e => { e.preventDefault(); dropResize.classList.add('border-violet-400', 'bg-violet-50'); });
+                dropResize.addEventListener('dragleave', e => { e.preventDefault(); dropResize.classList.remove('border-violet-400', 'bg-violet-50'); });
+                dropResize.addEventListener('drop', e => {
+                    e.preventDefault();
+                    dropResize.classList.remove('border-violet-400', 'bg-violet-50');
+                    if(e.dataTransfer.files[0]) processImgResizeFile(e.dataTransfer.files[0]);
+                });
+            }
+
+            // SVG Editor (Lê o arquivo de texto em vez de imagem)
+            const dropSvg = document.getElementById('svg-editor-in');
+            if(dropSvg) {
+                dropSvg.addEventListener('dragover', e => { e.preventDefault(); dropSvg.classList.add('border-amber-400', 'ring-2', 'ring-amber-400/50'); });
+                dropSvg.addEventListener('dragleave', e => { e.preventDefault(); dropSvg.classList.remove('border-amber-400', 'ring-2', 'ring-amber-400/50'); });
+                dropSvg.addEventListener('drop', e => {
+                    e.preventDefault();
+                    dropSvg.classList.remove('border-amber-400', 'ring-2', 'ring-amber-400/50');
+                    const file = e.dataTransfer.files[0];
+                    // Aceita arquivos .svg textuais
+                    if(file && (file.type === 'image/svg+xml' || file.name.endsWith('.svg'))) {
+                        const reader = new FileReader();
+                        reader.onload = evt => {
+                            dropSvg.value = evt.target.result;
+                            updateSvgPreview();
+                        };
+                        reader.readAsText(file);
+                    }
+                });
+            }
+        }
+
+
+        // ================= STARTUP / URL PARSING =================
+        window.onload = () => {
+            renderPins();
+            updateSchemaForm();
+            updateSvgPreview(); 
+            setupDragDropZones(); 
+
+            // Lê as informações da URL ao carregar a página pela primeira vez
+            const params = new URLSearchParams(window.location.search);
+            const q = params.get('q');
+            const tool = params.get('tool');
+
+            if (q) {
+                document.getElementById('search-tools').value = q;
+                filterTools(false); // false pra não poluir o history inicial
+            }
+
+            if (tool && document.getElementById(`view-${tool}`)) {
+                navigate(tool, false); // Direciona para a ferramenta via link
+            } else {
+                navigate('home', false); // Direciona pra Home se não tiver parametro
+            }
+        }
+
+        // Lida com os botões "Voltar" e "Avançar" do navegador perfeitamente
+        window.onpopstate = () => {
+            const params = new URLSearchParams(window.location.search);
+            const tool = params.get('tool');
+            const q = params.get('q');
+            
+            document.getElementById('search-tools').value = q || '';
+            filterTools(false); 
+            
+            if (tool && document.getElementById(`view-${tool}`)) {
+                navigate(tool, false);
+            } else {
+                navigate('home', false);
+            }
+        };
+
+    </script>
+</body>
+</html>
